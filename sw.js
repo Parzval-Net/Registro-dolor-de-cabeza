@@ -21,7 +21,7 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
+      if (cachedResponse && cachedResponse.ok) {
         return cachedResponse;
       }
 
