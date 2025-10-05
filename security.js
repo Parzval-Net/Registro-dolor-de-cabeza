@@ -127,7 +127,18 @@
     const registerBtn = document.querySelector('button[aria-label="Registrar nuevo episodio de dolor"]');
     if(registerBtn && !registerBtn.dataset.enhanced){
       registerBtn.dataset.enhanced = 'true';
-      registerBtn.textContent = 'Registrar';
+      const primaryLabel = registerBtn.querySelector('span.hidden.sm\:inline');
+      const mobileLabel = registerBtn.querySelector('span.sm\:hidden');
+      const icon = registerBtn.querySelector('svg');
+      if(primaryLabel){
+        primaryLabel.textContent = 'Registrar episodio';
+      }
+      if(mobileLabel){
+        mobileLabel.textContent = '+';
+      }
+      if(icon){
+        icon.style.display = 'none';
+      }
     }
 
     const backupWrapper = document.getElementById('migracare-backup');
@@ -158,7 +169,11 @@
   }
 
   function detectCurrentView(){
-    if(document.querySelector('.auth-screen')){
+    const authScreen = document.querySelector('.auth-screen');
+    if(authScreen){
+      const activeTab = authScreen.querySelector('.auth-tab.is-active');
+      const tabLabel = (activeTab ? activeTab.textContent : '').trim().toLowerCase();
+      if(tabLabel.includes('cuenta')) return 'Registro';
       return 'Login';
     }
     const nav = document.querySelector('nav.lg\\:hidden') || document.querySelector('nav[style*="position: fixed"]');
@@ -249,7 +264,7 @@
         showAdminOverlay();
       }
     }
-    const current = state.currentView;
+    const current = state.currentView === 'Registro' ? 'Login' : state.currentView;
     toggleRegisterAndBackup(current);
     updateLayoutForView(current);
     guardSettingsNav();
