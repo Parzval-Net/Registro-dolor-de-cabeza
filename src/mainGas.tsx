@@ -1,14 +1,14 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import App from './App';
+import { HashRouter } from 'react-router-dom';
+import AppGas from './AppGas';
 import './index.css';
 
 const container = document.getElementById('root')!;
 createRoot(container).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <HashRouter>
+      <AppGas />
+    </HashRouter>
   </React.StrictMode>
 );

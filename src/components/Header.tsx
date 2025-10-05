@@ -107,44 +107,51 @@ const Header = ({ onNewEntry }: HeaderProps) => {
   const SelectedIcon = iconMap[appSettings.appIcon] || Heart;
 
   return (
-    <header className="bg-white/95 backdrop-blur-xl border-b border-violet-100 sticky top-0 z-50 shadow-sm safe-area-pt">
-      <div className="max-w-6xl mx-auto px-4 py-3 lg:py-4">
+    <header className="nav-beautiful sticky top-0 z-50 safe-area-pt">
+      <div className="container-beautiful">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-4">
             <div 
-              className="w-9 h-9 lg:w-10 lg:h-10 rounded-2xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-all duration-300"
-              style={{
-                background: `linear-gradient(135deg, ${appSettings.primaryColor}, ${appSettings.secondaryColor})`
-              }}
+              className="w-14 h-14 rounded-2xl stat-icon-beautiful animate-float"
             >
-              <SelectedIcon className="w-5 h-5 lg:w-6 lg:h-6 text-white drop-shadow-sm" />
+              <SelectedIcon className="w-7 h-7 text-white" />
             </div>
-            <div>
-              <h1 
-                className="text-xl lg:text-2xl font-bold"
-                style={{
-                  background: `linear-gradient(135deg, ${appSettings.primaryColor}, ${appSettings.secondaryColor})`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text'
-                }}
-              >
+            <div className="hidden sm:block">
+              <h1 className="heading-beautiful text-2xl">
                 {appSettings.appName}
               </h1>
-              <p className="text-xs lg:text-sm text-slate-600 font-medium hidden sm:block">{appSettings.appDescription}</p>
+              <p className="text-beautiful">{appSettings.appDescription}</p>
+            </div>
+            <div className="sm:hidden">
+              <h1 className="text-xl font-bold text-primary">
+                {appSettings.appName}
+              </h1>
             </div>
           </div>
 
-          <Button
-            onClick={onNewEntry}
-            title="Registrar dolor"
-            aria-label="Registrar nuevo episodio de dolor"
-            className="bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500 hover:from-violet-600 hover:via-purple-600 hover:to-fuchsia-600 text-white shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/30 transition-all duration-300 rounded-2xl px-3 py-2 lg:px-6 lg:py-3 active:scale-95 text-sm lg:text-base"
-          >
-            <span className="sm:hidden">Dolor</span>
-            <span className="hidden sm:inline">Registrar dolor</span>
-            <span className="ml-1 text-lg">+</span>
-          </Button>
+          <div className="flex items-center space-x-3">
+            {/* Theme Toggle Button */}
+            <button 
+              className="w-12 h-12 rounded-2xl flex items-center justify-center hover:bg-muted/50 transition-all duration-300"
+              title="Cambiar tema"
+            >
+              <Sun className="w-5 h-5 text-muted-foreground" />
+            </button>
+
+            {/* New Entry Button */}
+            <button
+              onClick={onNewEntry}
+              title="Registrar dolor"
+              aria-label="Registrar nuevo episodio de dolor"
+              className="btn-beautiful text-sm px-6 py-3"
+            >
+              <span className="hidden sm:inline">Nuevo Episodio</span>
+              <span className="sm:hidden">+</span>
+              <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </header>

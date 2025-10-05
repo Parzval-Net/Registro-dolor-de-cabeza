@@ -24,65 +24,61 @@ const FormActionButtons = ({
   return (
     <>
       {/* Express Button */}
-      <div className="flex justify-between items-start mb-4">
+      <div className="flex justify-between items-start mb-6">
         <div className="flex-1" />
-        <Button 
-          variant="ghost" 
+        <button 
           onClick={onSwitchToExpress} 
-          className="text-violet-600 text-sm px-3 py-2 rounded-xl h-10 safari-button-fix mobile-touch-target"
+          className="btn-ghost-beautiful text-sm px-4 py-2"
         >
           <Clock className="w-4 h-4 mr-2" />
           Express
-        </Button>
+        </button>
       </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row justify-between items-center pt-4 border-t border-violet-200/50 gap-3">
+      <div className="flex flex-col sm:flex-row justify-between items-center pt-6 border-t border-border gap-4">
         <div className="flex gap-3 w-full sm:w-auto">
           {currentStep > 1 && (
-            <Button 
-              variant="outline" 
+            <button 
               onClick={onPrevious} 
-              className="text-sm rounded-xl h-12 safari-button-fix mobile-touch-target flex-1 sm:flex-none"
+              className="btn-ghost-beautiful text-sm flex-1 sm:flex-none"
             >
               Anterior
-            </Button>
+            </button>
           )}
-          <Button 
-            variant="outline" 
+          <button 
             onClick={onCancel} 
-            className="text-sm rounded-xl h-12 safari-button-fix mobile-touch-target flex-1 sm:flex-none"
+            className="btn-ghost-beautiful text-sm flex-1 sm:flex-none"
           >
             Cancelar
-          </Button>
+          </button>
         </div>
         
         <div className="flex gap-3 w-full sm:w-auto">
           {currentStep === 1 && (
             <>
-              <Button 
+              <button 
                 onClick={onSaveBasic} 
-                variant="outline" 
-                className="bg-gray-100 text-sm rounded-xl h-12 safari-button-fix mobile-touch-target flex-1 sm:flex-none"
+                className="btn-secondary-beautiful text-sm flex-1 sm:flex-none"
               >
                 Guardar básico
-              </Button>
-              <Button 
+              </button>
+              <button 
                 onClick={onContinue} 
-                className="bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-sm rounded-xl shadow-lg h-12 safari-button-fix mobile-touch-target flex-1 sm:flex-none"
+                className="btn-beautiful text-sm flex-1 sm:flex-none"
               >
                 Continuar
-              </Button>
+              </button>
             </>
           )}
           {currentStep === 2 && (
-            <Button 
+            <button 
               onClick={onSaveComplete} 
-              className="bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-sm rounded-xl shadow-lg h-12 safari-button-fix mobile-touch-target w-full sm:w-auto"
+              className="btn-beautiful text-sm w-full sm:w-auto"
             >
               <Save className="w-4 h-4 mr-2" />
               Guardar completo
-            </Button>
+            </button>
           )}
         </div>
       </div>

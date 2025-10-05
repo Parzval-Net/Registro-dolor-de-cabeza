@@ -136,44 +136,181 @@ const AdminPanel = () => {
         <ChangePasswordModal onPasswordChanged={() => setShowChangePassword(false)} />
       )}
       
-      <div className="space-y-6 p-4">
-        <Card className="admin-panel-card">
-          <CardHeader className="pb-6 admin-panel-content">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <CardTitle className="text-2xl font-bold text-slate-800 flex items-center gap-3">
-                <Settings className="w-6 h-6 text-violet-500" />
-                Panel de Administración
-              </CardTitle>
-              <Button
+      <div 
+        style={{
+          padding: '2rem 1rem',
+          maxWidth: '1200px',
+          margin: '0 auto'
+        }}
+      >
+        <div 
+          style={{
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: '24px',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.15)',
+            overflow: 'hidden'
+          }}
+        >
+          {/* Header - Optimizado */}
+          <div 
+            style={{
+              padding: '2rem',
+              borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
+              background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)'
+            }}
+          >
+            <div 
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1.5rem'
+              }}
+              className="sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div 
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem'
+                }}
+              >
+                <div 
+                  style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '16px',
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 8px 20px rgba(102, 126, 234, 0.3)'
+                  }}
+                >
+                  <Settings className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 
+                    style={{
+                      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontSize: '1.75rem',
+                      fontWeight: 700,
+                      color: '#1e293b',
+                      margin: 0,
+                      lineHeight: 1.2
+                    }}
+                  >
+                    Panel de Administración
+                  </h1>
+                  <p 
+                    style={{
+                      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      fontSize: '0.875rem',
+                      color: '#64748b',
+                      margin: 0,
+                      marginTop: '0.25rem'
+                    }}
+                  >
+                    Configura tu aplicación personalizada
+                  </p>
+                </div>
+              </div>
+              
+              <button
                 onClick={handleLogout}
-                variant="outline"
-                size="sm"
-                className="text-slate-800 font-semibold hover:bg-red-100 hover:text-red-800 hover:border-red-300 w-full sm:w-auto bg-white"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0.75rem 1.5rem',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  borderRadius: '12px',
+                  border: '2px solid #ef4444',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  background: 'rgba(255, 255, 255, 0.8)',
+                  color: '#ef4444',
+                  width: '100%',
+                  maxWidth: '200px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#ef4444';
+                  e.currentTarget.style.color = 'white';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.8)';
+                  e.currentTarget.style.color = '#ef4444';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Cerrar Sesión
-              </Button>
+              </button>
             </div>
             
-            <AdminTabs activeTab={activeTab} onTabChange={setActiveTab} />
-          </CardHeader>
+            <div style={{ marginTop: '1.5rem' }}>
+              <AdminTabs activeTab={activeTab} onTabChange={setActiveTab} />
+            </div>
+          </div>
 
-          <CardContent className="space-y-6 admin-panel-content">
+          {/* Content - Optimizado */}
+          <div 
+            style={{
+              padding: '2rem',
+              background: 'rgba(248, 250, 252, 0.5)'
+            }}
+          >
             {renderTabContent()}
 
             {activeTab !== 'medications' && activeTab !== 'security' && (
-              <div className="flex justify-end pt-6 border-t border-slate-300">
-                <Button
+              <div 
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  paddingTop: '2rem',
+                  borderTop: '1px solid rgba(226, 232, 240, 0.5)',
+                  marginTop: '2rem'
+                }}
+              >
+                <button
                   onClick={handleSave}
-                  className="bg-violet-500 hover:bg-violet-600 text-white font-bold shadow-lg w-full sm:w-auto"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0.875rem 2rem',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    borderRadius: '12px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white',
+                    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+                    minWidth: '200px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 8px 20px rgba(102, 126, 234, 0.4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.3)';
+                  }}
                 >
                   <Save className="w-4 h-4 mr-2" />
                   Guardar Configuración
-                </Button>
+                </button>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </>
   );

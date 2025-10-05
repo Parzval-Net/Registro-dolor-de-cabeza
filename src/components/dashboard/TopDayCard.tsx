@@ -33,24 +33,24 @@ const TopDayCard = ({ entries }: TopDayCardProps) => {
   const { day, count } = getDayWithMostEpisodes();
 
   return (
-    <Card className="glass-card-dark glow-effect group hover:scale-105 transition-all duration-300">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-        <CardTitle className="text-sm font-semibold text-slate-700">Día Crítico</CardTitle>
-        <div className="w-12 h-12 bg-gradient-to-br from-rose-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg shadow-rose-500/25 group-hover:shadow-xl group-hover:shadow-rose-500/30 transition-all duration-300">
-          <Calendar className="h-6 w-6 text-white" />
+    <div className="stat-beautiful">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="subheading-beautiful">Día Crítico</h3>
+        <div className="w-14 h-14 rounded-2xl gradient-warning flex items-center justify-center shadow-lg">
+          <Calendar className="h-7 w-7 text-white" />
         </div>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <div className="text-sm font-bold text-slate-800">{day}</div>
-        <p className="text-sm text-slate-600">{count} episodio{count !== 1 ? 's' : ''}</p>
-        <div className="w-full bg-slate-200 rounded-full h-2">
+      </div>
+      <div className="space-y-4">
+        <div className="text-2xl font-bold text-foreground">{day}</div>
+        <p className="text-beautiful text-lg">{count} episodio{count !== 1 ? 's' : ''}</p>
+        <div className="w-full bg-muted rounded-full h-3">
           <div 
-            className="bg-gradient-to-r from-rose-500 to-pink-500 h-2 rounded-full" 
+            className="gradient-warning h-3 rounded-full transition-all duration-500" 
             style={{width: `${Math.min(count * 20, 100)}%`}}
           ></div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

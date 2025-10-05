@@ -50,54 +50,51 @@ const ExpressForm = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-rose-50 via-lavender-50 to-coral-50 flex items-center justify-center p-4 z-50 safe-area-pt safe-area-pb">
-      <Card className="w-full max-w-sm glass-card-mobile shadow-2xl border-0 rounded-3xl overflow-hidden mx-4">
-        <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-          <div className="text-center space-y-3">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-rose-500 to-pink-500 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-rose-500/25">
-              <Zap className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
+    <div className="modal-beautiful">
+      <div className="modal-content-beautiful max-w-md w-full">
+        <div className="p-8 space-y-8">
+          <div className="text-center space-y-6">
+            <div className="w-20 h-20 rounded-3xl gradient-primary flex items-center justify-center mx-auto animate-float">
+              <Zap className="h-10 w-10 text-white" />
             </div>
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Registro Express</h2>
-              <p className="text-sm text-slate-600 font-medium">Solo lo esencial, en segundos</p>
+              <h2 className="heading-beautiful text-3xl">Registro Express</h2>
+              <p className="text-beautiful">Solo lo esencial, en segundos</p>
             </div>
           </div>
 
-          <div className="space-y-4 sm:space-y-5">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label className="text-sm font-bold text-slate-700">Fecha</Label>
-                <Input
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <label className="label-beautiful">Fecha</label>
+                <input
                   type="date"
                   value={formData.date}
                   onChange={(e) => onFormDataChange({ ...formData, date: e.target.value })}
-                  className="border-violet-200 rounded-xl bg-white/90 text-base h-12 safari-form-button mobile-touch-target"
+                  className="input-beautiful"
                 />
               </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-bold text-slate-700">Hora</Label>
-                <Input
+              <div className="space-y-3">
+                <label className="label-beautiful">Hora</label>
+                <input
                   type="time"
                   value={formData.time}
                   onChange={(e) => onFormDataChange({ ...formData, time: e.target.value })}
-                  className="border-violet-200 rounded-xl bg-white/90 text-base h-12 safari-form-button mobile-touch-target"
+                  className="input-beautiful"
                 />
               </div>
             </div>
 
-            <div className="glass-card rounded-2xl p-4 sm:p-5 bg-gradient-to-br from-violet-50/80 to-purple-50/80 border border-violet-200/50">
-              <Label className="text-sm font-bold text-slate-700 mb-3 block text-center">Intensidad del dolor</Label>
-              <div className="space-y-4">
+            <div className="card-beautiful p-6">
+              <label className="label-beautiful text-center mb-6 block text-lg">Intensidad del dolor</label>
+              <div className="space-y-6">
                 <div className="text-center">
-                  <div className={`text-3xl sm:text-4xl font-bold mb-2 ${getIntensityColor(formData.intensity[0])}`}>
+                  <div className="stat-number-beautiful text-5xl">
                     {formData.intensity[0]}
                   </div>
-                  <Badge 
-                    variant="secondary" 
-                    className={`bg-gradient-to-r ${getIntensityBg(formData.intensity[0])} text-white shadow-lg text-xs px-3 py-1`}
-                  >
+                  <div className="text-beautiful text-lg font-semibold">
                     {getIntensityLabel(formData.intensity[0])}
-                  </Badge>
+                  </div>
                 </div>
                 <Slider
                   value={formData.intensity}
@@ -111,34 +108,32 @@ const ExpressForm = ({
             </div>
           </div>
 
-          <div className="flex space-x-3">
-            <Button 
-              variant="outline" 
+          <div className="flex space-x-4">
+            <button 
               onClick={onCancel} 
-              className="flex-1 text-sm rounded-xl h-12 safari-button-fix mobile-touch-target"
+              className="btn-ghost-beautiful flex-1"
             >
               Cancelar
-            </Button>
-            <Button 
+            </button>
+            <button 
               onClick={onSubmit} 
-              className="flex-1 bg-rose-500 hover:bg-rose-600 text-sm rounded-xl h-12 safari-button-fix mobile-touch-target"
+              className="btn-beautiful flex-1"
             >
-              <Save className="w-4 h-4 mr-2" />
+              <Save className="w-5 h-5 mr-2" />
               Guardar
-            </Button>
+            </button>
           </div>
 
           <div className="text-center">
-            <Button 
-              variant="ghost" 
+            <button 
               onClick={onSwitchToComplete}
-              className="text-sm text-violet-600 hover:text-violet-700 h-12 safari-button-fix mobile-touch-target"
+              className="btn-ghost-beautiful text-sm"
             >
               ¿Quieres agregar más detalles?
-            </Button>
+            </button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };

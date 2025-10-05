@@ -27,62 +27,161 @@ const EditEpisodeDialog = ({ entry, onSave, onCancel }: EditEpisodeDialogProps) 
   };
 
   return (
-    <Dialog open={true} onOpenChange={onCancel}>
-      <DialogContent 
-        className="w-full h-full max-w-none max-h-none p-0 gap-0 bg-white border-0 rounded-none sm:w-[95vw] sm:h-[95vh] sm:max-w-4xl sm:max-h-[95vh] sm:rounded-2xl sm:border sm:border-violet-200 overflow-hidden [&>button]:hidden"
+    <div 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.5)',
+        backdropFilter: 'blur(8px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        padding: '1rem'
+      }}
+    >
+      <div 
         style={{
-          position: 'fixed',
-          top: '0',
-          left: '0',
-          right: '0',
-          bottom: '0',
-          margin: '0',
-          transform: 'none',
+          maxWidth: '900px',
+          width: '100%',
+          maxHeight: '95vh',
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(20px)',
+          borderRadius: '24px',
+          border: '1px solid rgba(255, 255, 255, 0.3)',
+          boxShadow: '0 25px 50px rgba(0, 0, 0, 0.25)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
         }}
       >
-        {/* Header con botón de cerrar personalizado */}
-        <DialogHeader className="px-4 py-4 sm:px-6 sm:py-5 bg-gradient-to-r from-violet-50 via-purple-50 to-fuchsia-50 border-b border-violet-200/50 flex-shrink-0">
-          <div className="flex items-center justify-between min-w-0">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
-                <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <DialogTitle className="text-lg sm:text-xl font-bold text-slate-800 mb-1 truncate">
-                  Editar Episodio
-                </DialogTitle>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs sm:text-sm text-slate-600">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
-                    <span className="truncate">{new Date(formData.date).toLocaleDateString('es-ES', { 
+        {/* Header - Optimizado */}
+        <div 
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '1.5rem',
+            borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
+            flexShrink: 0,
+            background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)'
+          }}
+        >
+          <div 
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem'
+            }}
+          >
+            <div 
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '16px',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 8px 20px rgba(102, 126, 234, 0.3)'
+              }}
+            >
+              <Calendar className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h2 
+                style={{
+                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontSize: '1.5rem',
+                  fontWeight: 700,
+                  color: '#1e293b',
+                  margin: 0,
+                  lineHeight: 1.2
+                }}
+              >
+                Editar Episodio
+              </h2>
+              <div 
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  marginTop: '0.25rem'
+                }}
+              >
+                <div 
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontSize: '0.875rem',
+                    color: '#64748b'
+                  }}
+                >
+                  <Calendar className="h-4 w-4" />
+                  <span>
+                    {new Date(formData.date).toLocaleDateString('es-ES', { 
                       weekday: 'short', 
                       day: 'numeric', 
                       month: 'short'
-                    })}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-                    <span>{formData.time}</span>
-                  </div>
+                    })}
+                  </span>
+                </div>
+                <div 
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontSize: '0.875rem',
+                    color: '#64748b'
+                  }}
+                >
+                  <Clock className="h-4 w-4" />
+                  <span>{formData.time}</span>
                 </div>
               </div>
             </div>
-            {/* Botón de cerrar personalizado */}
-            <button
-              onClick={onCancel}
-              className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-white/80 hover:bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-800 transition-all duration-200 shadow-sm hover:shadow-md mobile-touch-target"
-            >
-              <X className="h-4 w-4 sm:h-5 sm:w-5" />
-            </button>
           </div>
-        </DialogHeader>
-        
-        {/* Contenido con scroll optimizado para móvil */}
+          <button
+            onClick={onCancel}
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '12px',
+              background: 'rgba(148, 163, 184, 0.1)',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              color: '#64748b'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(148, 163, 184, 0.2)';
+              e.currentTarget.style.transform = 'scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(148, 163, 184, 0.1)';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content - Scrollable - Optimizado */}
         <div 
-          className="flex-1 overflow-y-auto min-h-0 px-4 py-4 sm:px-6 sm:py-6 bg-gradient-to-br from-slate-50/50 to-violet-50/30"
           style={{
-            WebkitOverflowScrolling: 'touch',
-            overscrollBehavior: 'contain'
+            flex: 1,
+            overflowY: 'auto',
+            padding: '1.5rem',
+            background: 'rgba(248, 250, 252, 0.5)'
           }}
         >
           <EditEpisodeForm 
@@ -91,27 +190,87 @@ const EditEpisodeDialog = ({ entry, onSave, onCancel }: EditEpisodeDialogProps) 
           />
         </div>
 
-        {/* Footer con botones optimizados para móvil */}
-        <div className="flex-shrink-0 p-4 sm:p-6 bg-white border-t border-violet-200/50 safe-area-pb">
-          <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
-            <Button 
-              variant="outline" 
-              onClick={onCancel} 
-              className="w-full sm:w-auto h-12 sm:h-10 px-6 py-2.5 border-2 border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition-all duration-200 rounded-xl font-semibold mobile-touch-target safari-interactive-button"
+        {/* Footer - Fixed - Optimizado */}
+        <div 
+          style={{
+            flexShrink: 0,
+            padding: '1.5rem',
+            borderTop: '1px solid rgba(226, 232, 240, 0.5)',
+            background: 'rgba(255, 255, 255, 0.8)',
+            backdropFilter: 'blur(10px)'
+          }}
+        >
+          <div 
+            style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '0.75rem'
+            }}
+          >
+            <button 
+              onClick={onCancel}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0.75rem 1.5rem',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                borderRadius: '12px',
+                border: '2px solid #e2e8f0',
+                cursor: 'pointer',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                background: 'rgba(255, 255, 255, 0.8)',
+                color: '#64748b'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#cbd5e1';
+                e.currentTarget.style.background = 'rgba(248, 250, 252, 0.8)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#e2e8f0';
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.8)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
             >
               Cancelar
-            </Button>
-            <Button 
-              onClick={handleSave} 
-              className="w-full sm:w-auto h-12 sm:h-10 px-6 py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl font-semibold mobile-touch-target safari-interactive-button"
+            </button>
+            <button 
+              onClick={handleSave}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0.75rem 1.5rem',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                borderRadius: '12px',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 20px rgba(102, 126, 234, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.3)';
+              }}
             >
               <Save className="w-4 h-4 mr-2" />
               Guardar
-            </Button>
+            </button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 };
 

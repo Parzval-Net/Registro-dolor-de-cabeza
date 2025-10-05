@@ -15,24 +15,24 @@ const getIntensityGradient = (intensity: number) => {
 };
 
 const AverageIntensityCard = ({ averageIntensity }: AverageIntensityCardProps) => (
-  <Card className="glass-card-dark glow-effect group hover:scale-105 transition-all duration-300">
-    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-      <CardTitle className="text-sm font-semibold text-slate-700">Intensidad</CardTitle>
-      <div className="w-12 h-12 bg-gradient-to-br from-fuchsia-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg shadow-fuchsia-500/25 group-hover:shadow-xl group-hover:shadow-fuchsia-500/30 transition-all duration-300">
-        <Activity className="h-6 w-6 text-white" />
+  <div className="stat-beautiful">
+    <div className="flex items-center justify-between mb-6">
+      <h3 className="subheading-beautiful">Intensidad</h3>
+      <div className="w-14 h-14 rounded-2xl gradient-accent flex items-center justify-center shadow-lg">
+        <Activity className="h-7 w-7 text-white" />
       </div>
-    </CardHeader>
-    <CardContent className="space-y-2">
-      <div className="text-3xl font-bold text-slate-800">{averageIntensity.toFixed(1)}</div>
-      <p className="text-sm text-slate-600">promedio de 10</p>
-      <div className="w-full bg-slate-200 rounded-full h-2">
+    </div>
+    <div className="space-y-4">
+      <div className="stat-number-beautiful text-5xl">{averageIntensity.toFixed(1)}</div>
+      <p className="text-beautiful text-lg">promedio de 10</p>
+      <div className="w-full bg-muted rounded-full h-3">
         <div
-          className={`bg-gradient-to-r ${getIntensityGradient(averageIntensity)} h-2 rounded-full`}
+          className="gradient-accent h-3 rounded-full transition-all duration-500"
           style={{ width: `${averageIntensity * 10}%` }}
         ></div>
       </div>
-    </CardContent>
-  </Card>
+    </div>
+  </div>
 );
 
 export default AverageIntensityCard;

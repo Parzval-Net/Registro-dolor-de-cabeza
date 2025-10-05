@@ -16,8 +16,35 @@ const MobileBottomNav = ({ currentView, onViewChange }: MobileBottomNavProps) =>
   ];
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/98 backdrop-blur-xl border-t border-violet-100 shadow-lg z-50 safe-area-pb">
-      <div className="flex items-center justify-around px-1 py-2">
+    <nav 
+      style={{
+        display: 'block',
+        position: 'fixed',
+        bottom: 0,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: 'min(100%, 640px)',
+        background: 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(20px)',
+        borderTop: '1px solid rgba(255, 255, 255, 0.3)',
+        boxShadow: '0 -10px 30px rgba(0, 0, 0, 0.1)',
+        zIndex: 100,
+        height: '80px',
+        paddingBottom: 'calc( env(safe-area-inset-bottom) + 4px )'
+      }}
+      className="lg:hidden"
+    >
+      <div 
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-around',
+          padding: '0.75rem 1rem',
+          maxWidth: '100%',
+          height: '100%',
+          boxSizing: 'border-box'
+        }}
+      >
         {navItems.map((item) => {
           const IconComponent = item.icon;
           const isActive = currentView === item.id;
@@ -26,16 +53,77 @@ const MobileBottomNav = ({ currentView, onViewChange }: MobileBottomNavProps) =>
             <button
               key={item.id}
               onClick={() => onViewChange(item.id as any)}
-              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 min-w-0 flex-1 active:scale-95 ${
-                isActive
-                  ? 'bg-gradient-to-t from-violet-500 to-fuchsia-500 text-white shadow-lg shadow-violet-500/25'
-                  : 'text-slate-600 hover:bg-violet-50 hover:text-violet-700'
-              }`}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0.5rem',
+                borderRadius: '12px',
+                border: 'none',
+                background: isActive 
+                  ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                  : 'transparent',
+                color: isActive ? 'white' : '#64748b',
+                cursor: 'pointer',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                minWidth: '60px',
+                minHeight: '60px',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.background = 'rgba(102, 126, 234, 0.1)';
+                  e.currentTarget.style.color = '#667eea';
+                  e.currentTarget.style.transform = 'scale(1.05)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = '#64748b';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }
+              }}
             >
-              <IconComponent className={`w-4 h-4 mb-1 ${isActive ? 'drop-shadow-sm' : ''}`} />
-              <span className={`text-xs font-medium truncate ${isActive ? 'text-white' : ''}`}>
+              <IconComponent 
+                style={{
+                  width: '24px',
+                  height: '24px',
+                  marginBottom: '0.25rem',
+                  transition: 'all 0.3s ease'
+                }}
+              />
+              <span 
+                style={{
+                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontSize: '0.75rem',
+                  fontWeight: isActive ? 700 : 600,
+                  textAlign: 'center',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: '100%',
+                  transition: 'all 0.3s ease'
+                }}
+              >
                 {item.label}
               </span>
+              {isActive && (
+                <div 
+                  style={{
+                    position: 'absolute',
+                    top: '0.25rem',
+                    right: '0.25rem',
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: 'rgba(255, 255, 255, 0.8)',
+                    boxShadow: '0 0 0 2px rgba(102, 126, 234, 0.3)'
+                  }}
+                />
+              )}
             </button>
           );
         })}

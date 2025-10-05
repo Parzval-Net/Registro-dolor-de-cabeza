@@ -80,34 +80,108 @@ const Dashboard = ({ entries }: DashboardProps) => {
   };
 
   return (
-    <div className="space-y-10 animate-fade-in">
-      {/* Hero Section */}
-      <div className="text-center space-y-4 py-8">
-        <div className="inline-flex items-center space-x-3 glass-card rounded-full px-6 py-3 mb-4">
-          <Sparkles className="w-5 h-5 text-violet-500" />
-          <span className="text-sm font-medium text-slate-600">Panel de Bienestar</span>
-        </div>
-        <h2 className="text-4xl font-bold bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 bg-clip-text text-transparent">
+    <div 
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '3rem',
+        paddingBottom: '2rem'
+      }}
+    >
+      {/* Hero Section - Optimizada */}
+      <div 
+        style={{
+          textAlign: 'center',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1.5rem',
+          padding: '2rem 0'
+        }}
+      >
+        <h2 
+          style={{
+            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontSize: 'clamp(1.875rem, 4vw, 2.5rem)',
+            fontWeight: 700,
+            background: 'linear-gradient(135deg, #1e293b 0%, #475569 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            lineHeight: 1.2,
+            margin: 0
+          }}
+        >
           Tu salud en perspectiva
         </h2>
-        <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+        <p 
+          style={{
+            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontSize: '1.125rem',
+            color: '#64748b',
+            maxWidth: '600px',
+            margin: '0 auto',
+            lineHeight: 1.6
+          }}
+        >
           {dashboardDescription}
         </p>
       </div>
 
       {/* Quote Section */}
-      <QuoteSection />
+      <div 
+        style={{
+          animation: 'fadeIn 0.6s ease-out'
+        }}
+      >
+        <QuoteSection />
+      </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <EpisodeCountCard count={monthlyEntries.length} />
-        <AverageIntensityCard averageIntensity={averageIntensity} />
-        <TopMedicationCard medication={topMedication} />
-        <TopDayCard entries={entries} />
+      {/* Stats Grid - Optimizada */}
+      <div 
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr',
+          gap: '1.5rem',
+          marginTop: '2rem'
+        }}
+        className="sm:grid-cols-2 lg:grid-cols-4"
+      >
+        <div 
+          style={{
+            animation: 'slideUp 0.6s ease-out'
+          }}
+        >
+          <EpisodeCountCard count={monthlyEntries.length} />
+        </div>
+        <div 
+          style={{
+            animation: 'slideUp 0.6s ease-out 0.1s both'
+          }}
+        >
+          <AverageIntensityCard averageIntensity={averageIntensity} />
+        </div>
+        <div 
+          style={{
+            animation: 'slideUp 0.6s ease-out 0.2s both'
+          }}
+        >
+          <TopMedicationCard medication={topMedication} />
+        </div>
+        <div 
+          style={{
+            animation: 'slideUp 0.6s ease-out 0.3s both'
+          }}
+        >
+          <TopDayCard entries={entries} />
+        </div>
       </div>
 
       {/* Recent Episodes */}
-      <div className="grid grid-cols-1 gap-8">
+      <div 
+        style={{
+          animation: 'fadeIn 0.6s ease-out 0.4s both'
+        }}
+      >
         <RecentEpisodesList entries={recentEntries} getIntensityGradient={getIntensityGradient} />
       </div>
     </div>
