@@ -139,6 +139,7 @@
 
     cleanupDurationRows();
     guardSettingsNav();
+    ensureMobileNavPinned();
     syncViewState();
   }
 
@@ -289,6 +290,14 @@
     if(!nav) return;
     const buttons = Array.from(nav.querySelectorAll('button'));
     buttons.forEach(btn => {
+      if(!btn.dataset.migracareSync){
+        btn.dataset.migracareSync = 'true';
+        btn.addEventListener('click', () => {
+          window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(() => syncViewState());
+          });
+        });
+      }
       const label = (btn.textContent || '').trim().toLowerCase();
       if((label.includes('ajustes') || label.includes('configuración')) && !btn.dataset.guard){
         btn.dataset.guard = 'true';
@@ -301,6 +310,35 @@
         }, true);
       }
     });
+  }
+
+  function ensureMobileNavPinned(){
+    const nav = document.querySelector('nav.lg\\:hidden') || document.querySelector('nav[style*="position: fixed"]');
+    if(!nav) return;
+    const styles = window.getComputedStyle(nav);
+    if(styles.display === 'none'){
+      if(document.body.dataset.migracareNavPad){
+        document.body.style.paddingBottom = document.body.dataset.migracareNavPad;
+      }
+      return;
+    }
+    if(!nav.dataset.migracarePinned){
+      nav.dataset.migracarePinned = 'true';
+      nav.style.position = 'fixed';
+      nav.style.left = '50%';
+      nav.style.transform = 'translateX(-50%)';
+      nav.style.right = '';
+      nav.style.bottom = '0';
+      nav.style.zIndex = nav.style.zIndex || '9997';
+      nav.style.maxWidth = nav.style.maxWidth || '640px';
+      nav.style.width = nav.style.width || 'min(100%, 640px)';
+    }
+    const navHeight = Math.round(nav.getBoundingClientRect().height || 80);
+    const body = document.body;
+    if(!body.dataset.migracareNavPad){
+      body.dataset.migracareNavPad = window.getComputedStyle(body).paddingBottom || '';
+    }
+    body.style.paddingBottom = `calc(${navHeight}px + env(safe-area-inset-bottom, 0px))`;
   }
 
   function syncViewState(){
