@@ -1,7 +1,18 @@
 (function(){
   const base64 = str => typeof atob === 'function' ? atob(str) : Buffer.from(str, 'base64').toString('utf8');
+  const SECRET_SEGMENT = base64('b3duZXItY29uc29sZS05ZjNiMWNlZA==');
   const ADMIN_USER = base64('b3duZXJAbWlncmFjYXJlLmFwcA==');
-  const SECRET_PATH = '/' + base64('b3duZXItY29uc29sZS05ZjNiMWNlZA==');
+  const PROJECT_ROOT = (() => {
+    const path = decodeURIComponent(window.location.pathname || '/');
+    const parts = path.split('/').filter(Boolean);
+    if (!parts.length) return '/';
+    return '/' + parts[0] + '/';
+  })();
+  const SECRET_PATH = (() => {
+    const base = PROJECT_ROOT.endsWith('/') ? PROJECT_ROOT : PROJECT_ROOT + '/';
+    const joined = `${base}${SECRET_SEGMENT}`.replace(/\/+/g, '/');
+    return joined.endsWith('/') ? joined.slice(0, -1) : joined;
+  })();
   const ADMIN_HASH = 'fbe5fb5a1ac8baff9697730386868cf3d3e5beeddb36bf02e670e7fe043d132b';
   const STORAGE_KEY = 'migracare:ownerAuth';
   const ATTEMPT_KEY = 'migracare:ownerAttempts';
@@ -17,6 +28,32 @@
     observer: null,
     overlay: null
   };
+
+  function normalizePath(path){
+    const decoded = decodeURIComponent(path || '/');
+    const collapsed = decoded.replace(/\/+/g, '/');
+    const withoutTrailing = collapsed.endsWith('/') && collapsed !== '/' ? collapsed.slice(0, -1) : collapsed;
+    return withoutTrailing || '/';
+  }
+
+  function isSecretRoute(){
+    const path = normalizePath(window.location.pathname);
+    if(path === normalizePath(SECRET_PATH)) return true;
+    const search = decodeURIComponent(window.location.search || '');
+    if(search.includes(SECRET_SEGMENT)) return true;
+    const hash = decodeURIComponent(window.location.hash || '');
+    if(hash.includes(SECRET_SEGMENT)) return true;
+    const href = decodeURIComponent(window.location.href || '');
+    if(href.includes(SECRET_SEGMENT)) return true;
+    return false;
+  }
+
+  function resetToRoot(){
+    try{
+      const target = PROJECT_ROOT || '/';
+      window.history.replaceState(null, '', target);
+    }catch(_){/* ignore */}
+  }
 
   function toHex(buffer){
     return Array.from(new Uint8Array(buffer)).map(b=>b.toString(16).padStart(2,'0')).join('');
@@ -137,6 +174,7 @@
     errorBox.style.display='block';
     errorBox.textContent = `Demasiados intentos fallidos. Espera ${seconds}s para reintentar.`;
     document.body.appendChild(overlay);
+    resetToRoot();
     overlay.addEventListener('click', evt => { if(evt.target === overlay) evt.stopPropagation(); });
     const timer = setInterval(()=>{
       seconds--;
@@ -162,6 +200,7 @@
     const userInput = overlay.querySelector('#migracare-admin-user');
     const passInput = overlay.querySelector('#migracare-admin-pass');
     document.body.appendChild(overlay);
+    resetToRoot();
     userInput.value = '';
     passInput.value = '';
     errorBox.style.display='none';
@@ -169,7 +208,7 @@
 
     function hide(){
       overlay.remove();
-      window.history.replaceState(null,'','/');
+      resetToRoot();
     }
 
     closeBtn.addEventListener('click', hide);
@@ -191,7 +230,7 @@
           resetAttempts();
           setOwnerMode(true);
           overlay.remove();
-          window.history.replaceState(null,'','/');
+          resetToRoot();
           window.setTimeout(triggerAdminView,300);
           return;
         }
@@ -227,6 +266,160 @@
     }
   }
 
+  function collectBackupSnapshot(){
+    const snapshot = {
+      exportedAt: new Date().toISOString(),
+      data: {}
+    };
+    try{
+      for(let i = 0; i < localStorage.length; i++){
+        const key = localStorage.key(i);
+        if(!key) continue;
+        if(key === STORAGE_KEY || key === ATTEMPT_KEY) continue;
+        snapshot.data[key] = localStorage.getItem(key);
+      }
+    }catch(err){
+      snapshot.error = err && err.message ? err.message : String(err);
+    }
+    return snapshot;
+  }
+
+  function downloadJSON(content, filename){
+    const blob = new Blob([JSON.stringify(content, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }
+
+  async function readFileText(file){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error || new Error('No se pudo leer el archivo.'));
+      reader.readAsText(file, 'utf-8');
+    });
+  }
+
+  function restoreBackupData(payload){
+    if(!payload || typeof payload !== 'object'){
+      throw new Error('Formato de respaldo inválido.');
+    }
+    const record = payload.data && typeof payload.data === 'object' ? payload.data : payload;
+    const keys = Object.keys(record || {});
+    if(!keys.length){
+      throw new Error('No se encontraron datos para restaurar.');
+    }
+    keys.forEach(key => {
+      if(key === STORAGE_KEY || key === ATTEMPT_KEY) return;
+      const value = record[key];
+      try{
+        localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+      }catch(err){
+        throw new Error('No se pudo guardar en almacenamiento local.');
+      }
+    });
+  }
+
+  function initBackupPanel(){
+    if(document.getElementById('migracare-backup')) return;
+    const wrapper = document.createElement('div');
+    wrapper.id = 'migracare-backup';
+    wrapper.innerHTML = `
+      <style>
+        #migracare-backup{position:fixed;bottom:1.5rem;right:1.25rem;z-index:9998;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#0f172a;}
+        #migracare-backup .fab{border:none;border-radius:9999px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;padding:.85rem 1.35rem;font-weight:600;box-shadow:0 15px 35px rgba(79,70,229,.4);cursor:pointer;display:flex;align-items:center;gap:.5rem;transition:transform .2s,box-shadow .2s;}
+        #migracare-backup .fab:hover{transform:translateY(-2px);box-shadow:0 20px 45px rgba(88,80,236,.45);}
+        #migracare-backup .card{position:absolute;right:0;bottom:3.5rem;width:min(320px,90vw);background:#ffffff;border-radius:18px;padding:1.25rem 1.35rem;box-shadow:0 20px 45px rgba(15,23,42,.25);display:none;}
+        #migracare-backup .card.open{display:block;}
+        #migracare-backup .card h2{font-size:1.05rem;font-weight:700;color:#1e1b4b;margin:0 0 .5rem;}
+        #migracare-backup .card p{font-size:.9rem;color:#475569;margin:.35rem 0 1rem;}
+        #migracare-backup .actions{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;}
+        #migracare-backup button.action{flex:1 1 auto;border:none;border-radius:12px;padding:.7rem 1rem;font-weight:600;background:#4338ca;color:white;cursor:pointer;transition:background .2s,transform .2s;}
+        #migracare-backup button.action.secondary{background:#e2e8f0;color:#1e293b;}
+        #migracare-backup button.action:hover{transform:translateY(-1px);background:#3730a3;}
+        #migracare-backup label.import{flex:1 1 auto;position:relative;overflow:hidden;border-radius:12px;background:#f1f5f9;color:#1f2937;font-weight:600;padding:.7rem 1rem;text-align:center;cursor:pointer;}
+        #migracare-backup label.import input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+        #migracare-backup .status{margin-top:.75rem;font-size:.85rem;color:#0f172a;min-height:1.1rem;}
+        #migracare-backup .status.error{color:#b91c1c;}
+        @media (max-width:480px){#migracare-backup{right:1rem;bottom:1rem;}#migracare-backup .card{width:min(280px,92vw);}}
+      </style>
+      <button type="button" class="fab" aria-label="Respaldo de datos">🛡️ Respaldo</button>
+      <div class="card" role="dialog" aria-live="polite">
+        <h2>Respalda tu información</h2>
+        <p>Descarga un archivo para guardar tus episodios o impórtalo en otro dispositivo.</p>
+        <div class="actions">
+          <button type="button" class="action" data-action="export">Descargar respaldo</button>
+          <label class="import">Importar respaldo<input type="file" data-role="import" accept="application/json" /></label>
+          <button type="button" class="action secondary" data-action="close">Cerrar</button>
+        </div>
+        <div class="status" role="status"></div>
+      </div>
+    `;
+    document.body.appendChild(wrapper);
+
+    const fab = wrapper.querySelector('.fab');
+    const card = wrapper.querySelector('.card');
+    const exportBtn = wrapper.querySelector('[data-action="export"]');
+    const closeBtn = wrapper.querySelector('[data-action="close"]');
+    const importInput = wrapper.querySelector('[data-role="import"]');
+    const statusBox = wrapper.querySelector('.status');
+
+    const closeCard = () => {
+      card.classList.remove('open');
+      if(statusBox) statusBox.textContent = '';
+      if(importInput) importInput.value = '';
+    };
+
+    fab.addEventListener('click', () => {
+      card.classList.toggle('open');
+      if(card.classList.contains('open')){
+        statusBox.textContent = '';
+      }
+    });
+
+    closeBtn.addEventListener('click', closeCard);
+
+    exportBtn.addEventListener('click', () => {
+      try{
+        const snapshot = collectBackupSnapshot();
+        const fileName = `migraCare-respaldo-${new Date().toISOString().replace(/[:.]/g,'-')}.json`;
+        downloadJSON(snapshot, fileName);
+        statusBox.classList.remove('error');
+        statusBox.textContent = 'Respaldo descargado. Guárdalo en un lugar seguro.';
+      }catch(err){
+        statusBox.classList.add('error');
+        statusBox.textContent = err && err.message ? err.message : 'No se pudo crear el respaldo.';
+      }
+    });
+
+    importInput.addEventListener('change', async evt => {
+      const file = evt.target && evt.target.files ? evt.target.files[0] : null;
+      if(!file){
+        statusBox.classList.add('error');
+        statusBox.textContent = 'Selecciona un archivo de respaldo.';
+        return;
+      }
+      try{
+        const raw = await readFileText(file);
+        const payload = JSON.parse(raw);
+        restoreBackupData(payload);
+        statusBox.classList.remove('error');
+        statusBox.textContent = 'Datos importados correctamente. La página se actualizará.';
+        setTimeout(() => window.location.reload(), 1200);
+      }catch(err){
+        statusBox.classList.add('error');
+        statusBox.textContent = err && err.message ? err.message : 'No se pudo importar el respaldo.';
+      }finally{
+        evt.target.value = '';
+      }
+    });
+  }
+
   function interceptClicks(){
     document.addEventListener('click', evt => {
       const path = evt.composedPath ? evt.composedPath() : [evt.target];
@@ -246,13 +439,12 @@
   }
 
   function handleNavigation(){
-    const current = window.location.pathname.replace(/\/+/g,'/');
-    if(current === SECRET_PATH){
+    if(isSecretRoute()){
       showAdminOverlay();
-    } else if(!current.startsWith(SECRET_PATH)){
-      if(!state.owner){
-        annotateAdminElements();
-      }
+      return;
+    }
+    if(!state.owner){
+      annotateAdminElements();
     }
   }
 
@@ -264,6 +456,7 @@
     document.head.appendChild(style);
     ensureObserver();
     interceptClicks();
+    initBackupPanel();
     checkStoredOwner();
     annotateAdminElements();
     handleNavigation();

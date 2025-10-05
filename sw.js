@@ -1,4 +1,4 @@
-const CACHE_NAME = 'migracare-static-v3';
+const CACHE_NAME = 'migracare-static-v4';
 const OFFLINE_URLS = ['index.html', 'manifest.json', 'favicon.ico', 'security.js'];
 
 self.addEventListener('install', (event) => {
