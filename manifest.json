@@ -1,0 +1,34 @@
+{
+  "name": "MigraCare – Tu diario personal de migrañas",
+  "short_name": "MigraCare",
+  "description": "Aplicación para el seguimiento y registro de migrañas y dolores de cabeza",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#8B5CF6",
+  "orientation": "portrait-primary",
+  "lang": "es",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "./favicon.ico",
+      "sizes": "16x16 32x32",
+      "type": "image/x-icon"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nuevo episodio",
+      "short_name": "Nuevo",
+      "description": "Registra un nuevo episodio de migraña",
+      "url": "./?action=new",
+      "icons": [
+        {
+          "src": "./favicon.ico",
+          "sizes": "32x32"
+        }
+      ]
+    }
+  ]
+}
