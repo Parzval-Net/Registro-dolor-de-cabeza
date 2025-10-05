@@ -230,6 +230,11 @@
       sec.style.padding = view === 'Inicio' ? '2rem 0 4rem 0' : '1.5rem 0 4rem 0';
     });
 
+-    const quickNavGrid = document.querySelector('div[style*="gridTemplateColumns:\"repeat(auto-fit, minmax(140px, 1fr))\""]');
+-    if(quickNavGrid){
+-      quickNavGrid.style.gridTemplateColumns = view === 'Inicio' ? 'repeat(auto-fit, minmax(120px, 1fr))' : quickNavGrid.style.gridTemplateColumns;
+-      quickNavGrid.style.gap = view === 'Inicio' ? '0.75rem' : quickNavGrid.style.gap;
+-    }
     let quickNavGrid = document.querySelector('[data-migracare-quicknav]');
     if(!quickNavGrid){
       quickNavGrid = Array.from(document.querySelectorAll('div'))
