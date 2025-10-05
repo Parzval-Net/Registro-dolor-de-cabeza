@@ -115,9 +115,36 @@
     });
   }
 
+  function enhanceUI(){
+    const themeToggle = document.querySelector('button[title="Cambiar tema"]');
+    if(themeToggle && !themeToggle.dataset.removed){
+      themeToggle.dataset.removed = 'true';
+      themeToggle.remove();
+    }
+
+    const registerBtn = document.querySelector('button[aria-label="Registrar nuevo episodio de dolor"]');
+    if(registerBtn && !registerBtn.dataset.enhanced){
+      registerBtn.dataset.enhanced = 'true';
+      registerBtn.textContent = 'Registrar';
+    }
+
+    const backupWrapper = document.getElementById('migracare-backup');
+    if(backupWrapper && !backupWrapper.dataset.positioned){
+      backupWrapper.dataset.positioned = 'true';
+      backupWrapper.style.bottom = 'calc(5.5rem + env(safe-area-inset-bottom, 0px))';
+      const card = backupWrapper.querySelector('.card');
+      if(card){
+        card.style.bottom = '3.5rem';
+      }
+    }
+  }
+
   function ensureObserver(){
     if(state.observer) return;
-    state.observer = new MutationObserver(() => annotateAdminElements());
+    state.observer = new MutationObserver(() => {
+      annotateAdminElements();
+      enhanceUI();
+    });
     state.observer.observe(document.body, { childList: true, subtree: true });
   }
 
@@ -331,7 +358,7 @@
     wrapper.id = 'migracare-backup';
     wrapper.innerHTML = `
       <style>
-        #migracare-backup{position:fixed;bottom:1.5rem;right:1.25rem;z-index:9998;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#0f172a;}
+        #migracare-backup{position:fixed;bottom:calc(5.5rem + env(safe-area-inset-bottom,0));right:1.25rem;z-index:9998;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#0f172a;}
         #migracare-backup .fab{border:none;border-radius:9999px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;padding:.85rem 1.35rem;font-weight:600;box-shadow:0 15px 35px rgba(79,70,229,.4);cursor:pointer;display:flex;align-items:center;gap:.5rem;transition:transform .2s,box-shadow .2s;}
         #migracare-backup .fab:hover{transform:translateY(-2px);box-shadow:0 20px 45px rgba(88,80,236,.45);}
         #migracare-backup .card{position:absolute;right:0;bottom:3.5rem;width:min(320px,90vw);background:#ffffff;border-radius:18px;padding:1.25rem 1.35rem;box-shadow:0 20px 45px rgba(15,23,42,.25);display:none;}
@@ -459,13 +486,17 @@
     initBackupPanel();
     checkStoredOwner();
     annotateAdminElements();
+    enhanceUI();
     handleNavigation();
   }
 
   document.addEventListener('DOMContentLoaded', init);
   window.addEventListener('popstate', handleNavigation);
   window.addEventListener('hashchange', handleNavigation);
-  document.addEventListener(OWNER_EVENT, annotateAdminElements);
+  document.addEventListener(OWNER_EVENT, () => {
+    annotateAdminElements();
+    enhanceUI();
+  });
 
   if(document.readyState === 'interactive' || document.readyState === 'complete'){
     init();
