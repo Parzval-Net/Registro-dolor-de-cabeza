@@ -5,9 +5,12 @@ import App from './App';
 import './index.css';
 
 const container = document.getElementById('root')!;
+const basename = new URL(import.meta.env.BASE_URL, window.location.origin)
+  .pathname.replace(/\/$/, '') || '/';
+
 createRoot(container).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={basename === '' ? '/' : basename}>
       <App />
     </BrowserRouter>
   </React.StrictMode>
