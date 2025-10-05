@@ -125,22 +125,7 @@
     }
 
     const registerBtn = document.querySelector('button[aria-label="Registrar nuevo episodio de dolor"]');
-    if(registerBtn && !registerBtn.dataset.enhanced){
-      registerBtn.dataset.enhanced = 'true';
-      const spans = Array.from(registerBtn.querySelectorAll('span'));
-      const primaryLabel = spans.find(span => (span.className || '').includes('sm:inline'));
-      const mobileLabel = spans.find(span => (span.className || '').includes('sm:hidden'));
-      const icon = registerBtn.querySelector('svg');
-      if(primaryLabel){
-        primaryLabel.textContent = 'Registrar episodio';
-      }
-      if(mobileLabel){
-        mobileLabel.textContent = '+';
-      }
-      if(icon){
-        icon.style.display = 'none';
-      }
-    }
+    restyleRegisterButton(registerBtn);
 
     const backupWrapper = document.getElementById('migracare-backup');
     if(backupWrapper && !backupWrapper.dataset.positioned){
@@ -155,6 +140,32 @@
     cleanupDurationRows();
     guardSettingsNav();
     syncViewState();
+  }
+
+  function restyleRegisterButton(registerBtn){
+    if(!registerBtn || registerBtn.dataset.restyled) return;
+    registerBtn.dataset.restyled = 'true';
+    registerBtn.setAttribute('data-migracare-register','header');
+    const spans = Array.from(registerBtn.querySelectorAll('span'));
+    const primaryLabel = spans.find(span => (span.className || '').includes('sm:inline'));
+    const mobileLabel = spans.find(span => (span.className || '').includes('sm:hidden'));
+    const icon = registerBtn.querySelector('svg');
+    if(primaryLabel){
+      primaryLabel.textContent = 'Registrar episodio';
+    }
+    if(mobileLabel){
+      mobileLabel.textContent = '+';
+    }
+    if(icon){
+      icon.style.display = 'none';
+    }
+  }
+
+  function setRegisterVisibility(isVisible){
+    const elements = document.querySelectorAll('[data-migracare-register]');
+    elements.forEach(el => {
+      el.style.display = isVisible ? '' : 'none';
+    });
   }
 
   function cleanupDurationRows(){
@@ -196,25 +207,9 @@
   function toggleRegisterAndBackup(view){
     const inAuthScreen = !!document.querySelector('.auth-screen');
     const registerBtn = document.querySelector('button[aria-label="Registrar nuevo episodio de dolor"]');
-    if(registerBtn){
-      if(!registerBtn.dataset.enhanced){
-        registerBtn.dataset.enhanced = 'true';
-        const spans = Array.from(registerBtn.querySelectorAll('span'));
-        const primaryLabel = spans.find(span => (span.className || '').includes('sm:inline'));
-        const mobileLabel = spans.find(span => (span.className || '').includes('sm:hidden'));
-        const icon = registerBtn.querySelector('svg');
-        if(primaryLabel){
-          primaryLabel.textContent = 'Registrar episodio';
-        }
-        if(mobileLabel){
-          mobileLabel.textContent = '+';
-        }
-        if(icon){
-          icon.style.display = 'none';
-        }
-      }
-      registerBtn.style.display = !inAuthScreen && (!view || view === 'Inicio') ? '' : 'none';
-    }
+    restyleRegisterButton(registerBtn);
+    setRegisterVisibility(!inAuthScreen && (!view || view === 'Inicio'));
+
     const backupWrapper = document.getElementById('migracare-backup');
     if(backupWrapper){
       if(!inAuthScreen && (!view || view === 'Inicio')){
@@ -259,6 +254,10 @@
       const buttons = quickNavGrid.querySelectorAll('button');
       buttons.forEach(btn => {
         btn.style.padding = view === 'Inicio' ? '1.5rem 1rem' : '1.25rem .75rem';
+        const label = (btn.textContent || '').trim().toLowerCase();
+        if(label.includes('registrar') || label === '+'){
+          btn.setAttribute('data-migracare-register','quick');
+        }
       });
     }
   }
