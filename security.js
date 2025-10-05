@@ -168,6 +168,23 @@
     });
   }
 
+  function setHeroVisibility(isHome){
+    const heroHeader = document.querySelector('header.nav-beautiful');
+    if(heroHeader){
+      heroHeader.style.display = isHome ? '' : 'none';
+    }
+
+    const heroQuickNav = document.querySelector('[data-migracare-quicknav]');
+    if(heroQuickNav){
+      heroQuickNav.style.display = isHome ? '' : 'none';
+    }
+
+    const heroIntroduction = document.querySelector('[data-migracare-hero]');
+    if(heroIntroduction){
+      heroIntroduction.style.display = isHome ? '' : 'none';
+    }
+  }
+
   function cleanupDurationRows(){
     const spans = Array.from(document.querySelectorAll('span'));
     spans.forEach(span => {
@@ -208,7 +225,9 @@
     const inAuthScreen = !!document.querySelector('.auth-screen');
     const registerBtn = document.querySelector('button[aria-label="Registrar nuevo episodio de dolor"]');
     restyleRegisterButton(registerBtn);
-    setRegisterVisibility(!inAuthScreen && (!view || view === 'Inicio'));
+    const showHomeHeader = !inAuthScreen && (!view || view === 'Inicio');
+    setRegisterVisibility(showHomeHeader);
+    setHeroVisibility(showHomeHeader);
 
     const backupWrapper = document.getElementById('migracare-backup');
     if(backupWrapper){
@@ -226,10 +245,18 @@
 
   function updateLayoutForView(view){
     const sections = document.querySelectorAll('div[style*="padding: 3rem 0"]');
-    sections.forEach(sec => {
+    sections.forEach((sec, index) => {
+      if(index === 0 && !sec.hasAttribute('data-migracare-hero')){
+        sec.setAttribute('data-migracare-hero','intro');
+      }
       sec.style.padding = view === 'Inicio' ? '2rem 0 4rem 0' : '1.5rem 0 4rem 0';
     });
 
+-    const quickNavGrid = document.querySelector('div[style*="gridTemplateColumns:\"repeat(auto-fit, minmax(140px, 1fr))\""]');
+-    if(quickNavGrid){
+-      quickNavGrid.style.gridTemplateColumns = view === 'Inicio' ? 'repeat(auto-fit, minmax(120px, 1fr))' : quickNavGrid.style.gridTemplateColumns;
+-      quickNavGrid.style.gap = view === 'Inicio' ? '0.75rem' : quickNavGrid.style.gap;
+-    }
     let quickNavGrid = document.querySelector('[data-migracare-quicknav]');
     if(!quickNavGrid){
       quickNavGrid = Array.from(document.querySelectorAll('div'))
