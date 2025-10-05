@@ -1,4 +1,4 @@
-const CACHE_NAME = 'migracare-static-v1';
+const CACHE_NAME = 'migracare-static-v2';
 const OFFLINE_URLS = ['index.html', 'manifest.json', 'favicon.ico'];
 
 self.addEventListener('install', (event) => {
@@ -27,8 +27,10 @@ self.addEventListener('fetch', (event) => {
 
       return fetch(event.request)
         .then((networkResponse) => {
-          const responseClone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+          if (networkResponse && networkResponse.ok) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+          }
           return networkResponse;
         })
         .catch(() => caches.match('index.html'));
