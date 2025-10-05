@@ -26,3 +26,16 @@
 .rdp-table{width:100%!important;border-collapse:separate!important;border-spacing:.4rem!important;}
 .rdp-table tr{height:auto!important;}
 .rdp-day{min-width:2.4rem!important;min-height:2.4rem!important;}
+
+/* Ensure neutral white surfaces across cards/auth screens */
+.stat-beautiful,
+.card-beautiful,
+.auth-card,
+.glass-card-dark,
+.glass-card-mobile,
+.glass-beautiful,
+.card-beautiful *[class*="glass-card"] {
+  background:rgba(255,255,255,0.96)!important;
+  backdrop-filter:saturate(180%) blur(18px)!important;
+  -webkit-backdrop-filter:saturate(180%) blur(18px)!important;
+}
