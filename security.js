@@ -26,7 +26,9 @@
     owner: false,
     initDone: false,
     observer: null,
-    overlay: null
+    overlay: null,
+    overlayOpen: false,
+    currentView: 'Inicio'
   };
 
   function normalizePath(path){
@@ -137,6 +139,117 @@
         card.style.bottom = '3.5rem';
       }
     }
+
+    cleanupDurationRows();
+    guardSettingsNav();
+    syncViewState();
+  }
+
+  function cleanupDurationRows(){
+    const spans = Array.from(document.querySelectorAll('span'));
+    spans.forEach(span => {
+      const text = (span.textContent || '').trim().toLowerCase();
+      if(!text.startsWith('duración')) return;
+      const container = span.closest('.flex') || span.parentElement;
+      if(container && container.parentElement){
+        container.parentElement.removeChild(container);
+      }
+    });
+  }
+
+  function detectCurrentView(){
+    const nav = document.querySelector('nav.lg\\:hidden') || document.querySelector('nav[style*="position: fixed"]');
+    if(!nav) return state.currentView;
+    const buttons = Array.from(nav.querySelectorAll('button'));
+    let active = buttons.find(btn => {
+      const bg = btn.style.background || '';
+      return bg.includes('linear-gradient') && (bg.includes('#667eea') || bg.includes('rgba(102, 126, 234'));
+    });
+    if(!active){
+      active = buttons.find(btn => (btn.style.color || '').includes('rgb(255'));
+    }
+    if(!active) return state.currentView;
+    const labelSpan = Array.from(active.querySelectorAll('span')).pop();
+    const label = (labelSpan ? labelSpan.textContent : active.textContent || '').trim();
+    return label || state.currentView;
+  }
+
+  function toggleRegisterAndBackup(view){
+    const registerBtn = document.querySelector('button[aria-label="Registrar nuevo episodio de dolor"]');
+    if(registerBtn){
+      if(!registerBtn.dataset.enhanced){
+        registerBtn.dataset.enhanced = 'true';
+      }
+      registerBtn.textContent = 'Registrar';
+      registerBtn.style.display = !view || view === 'Inicio' ? '' : 'none';
+    }
+    const backupWrapper = document.getElementById('migracare-backup');
+    if(backupWrapper){
+      if(!view || view === 'Inicio'){
+        backupWrapper.style.display = '';
+      } else {
+        const card = backupWrapper.querySelector('.card');
+        if(card){
+          card.classList.remove('open');
+        }
+        backupWrapper.style.display = 'none';
+      }
+    }
+  }
+
+  function updateLayoutForView(view){
+    const sections = document.querySelectorAll('div[style*="padding: 3rem 0"]');
+    sections.forEach(sec => {
+      sec.style.padding = view === 'Inicio' ? '2rem 0 4rem 0' : '1.5rem 0 4rem 0';
+    });
+
+    const quickNavGrid = document.querySelector('div[style*="gridTemplateColumns:\"repeat(auto-fit, minmax(140px, 1fr))\""]');
+    if(quickNavGrid){
+      quickNavGrid.style.gridTemplateColumns = view === 'Inicio' ? 'repeat(auto-fit, minmax(120px, 1fr))' : quickNavGrid.style.gridTemplateColumns;
+      quickNavGrid.style.gap = '0.75rem';
+    }
+
+    if(view === 'Inicio' && quickNavGrid){
+      const buttons = quickNavGrid.querySelectorAll('button');
+      buttons.forEach(btn => {
+        btn.style.padding = '1.5rem 1rem';
+      });
+    }
+  }
+
+  function guardSettingsNav(){
+    const nav = document.querySelector('nav.lg\\:hidden') || document.querySelector('nav[style*="position: fixed"]');
+    if(!nav) return;
+    const buttons = Array.from(nav.querySelectorAll('button'));
+    buttons.forEach(btn => {
+      const label = (btn.textContent || '').trim().toLowerCase();
+      if((label.includes('ajustes') || label.includes('configuración')) && !btn.dataset.guard){
+        btn.dataset.guard = 'true';
+        btn.addEventListener('click', evt => {
+          if(state.owner) return;
+          evt.preventDefault();
+          evt.stopPropagation();
+          evt.stopImmediatePropagation?.();
+          showAdminOverlay();
+        }, true);
+      }
+    });
+  }
+
+  function syncViewState(){
+    const detected = detectCurrentView();
+    if(detected && detected !== state.currentView){
+      state.currentView = detected;
+      document.body.setAttribute('data-migracare-view', detected);
+      if(detected.toLowerCase().includes('ajuste') && !state.owner && !state.overlayOpen){
+        showAdminOverlay();
+      }
+    }
+    const current = state.currentView;
+    toggleRegisterAndBackup(current);
+    updateLayoutForView(current);
+    guardSettingsNav();
+    cleanupDurationRows();
   }
 
   function ensureObserver(){
@@ -201,6 +314,7 @@
     errorBox.style.display='block';
     errorBox.textContent = `Demasiados intentos fallidos. Espera ${seconds}s para reintentar.`;
     document.body.appendChild(overlay);
+    state.overlayOpen = true;
     resetToRoot();
     overlay.addEventListener('click', evt => { if(evt.target === overlay) evt.stopPropagation(); });
     const timer = setInterval(()=>{
@@ -208,6 +322,7 @@
       if(seconds <= 0){
         clearInterval(timer);
         overlay.remove();
+        state.overlayOpen = false;
         resetAttempts();
       } else {
         errorBox.textContent = `Demasiados intentos fallidos. Espera ${seconds}s para reintentar.`;
@@ -216,6 +331,7 @@
   }
 
   function showAdminOverlay(){
+    if(state.overlayOpen) return;
     if(getAttempts() >= MAX_ATTEMPTS){
       lockForCooldown();
       return;
@@ -227,6 +343,7 @@
     const userInput = overlay.querySelector('#migracare-admin-user');
     const passInput = overlay.querySelector('#migracare-admin-pass');
     document.body.appendChild(overlay);
+    state.overlayOpen = true;
     resetToRoot();
     userInput.value = '';
     passInput.value = '';
@@ -234,6 +351,7 @@
     userInput.focus();
 
     function hide(){
+      state.overlayOpen = false;
       overlay.remove();
       resetToRoot();
     }
@@ -256,6 +374,7 @@
         if(user === ADMIN_USER && digest === ADMIN_HASH){
           resetAttempts();
           setOwnerMode(true);
+          state.overlayOpen = false;
           overlay.remove();
           resetToRoot();
           window.setTimeout(triggerAdminView,300);
@@ -264,6 +383,7 @@
         incrementAttempts();
         const remaining = MAX_ATTEMPTS - getAttempts();
         if(remaining <= 0){
+          state.overlayOpen = false;
           overlay.remove();
           lockForCooldown();
         } else {
@@ -473,6 +593,7 @@
     if(!state.owner){
       annotateAdminElements();
     }
+    syncViewState();
   }
 
   function init(){
@@ -496,6 +617,7 @@
   document.addEventListener(OWNER_EVENT, () => {
     annotateAdminElements();
     enhanceUI();
+    syncViewState();
   });
 
   if(document.readyState === 'interactive' || document.readyState === 'complete'){
