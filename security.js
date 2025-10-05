@@ -158,6 +158,9 @@
   }
 
   function detectCurrentView(){
+    if(document.querySelector('.auth-screen')){
+      return 'Login';
+    }
     const nav = document.querySelector('nav.lg\\:hidden') || document.querySelector('nav[style*="position: fixed"]');
     if(!nav) return state.currentView;
     const buttons = Array.from(nav.querySelectorAll('button'));
@@ -175,17 +178,18 @@
   }
 
   function toggleRegisterAndBackup(view){
+    const inAuthScreen = !!document.querySelector('.auth-screen');
     const registerBtn = document.querySelector('button[aria-label="Registrar nuevo episodio de dolor"]');
     if(registerBtn){
       if(!registerBtn.dataset.enhanced){
         registerBtn.dataset.enhanced = 'true';
       }
       registerBtn.textContent = 'Registrar';
-      registerBtn.style.display = !view || view === 'Inicio' ? '' : 'none';
+      registerBtn.style.display = !inAuthScreen && (!view || view === 'Inicio') ? '' : 'none';
     }
     const backupWrapper = document.getElementById('migracare-backup');
     if(backupWrapper){
-      if(!view || view === 'Inicio'){
+      if(!inAuthScreen && (!view || view === 'Inicio')){
         backupWrapper.style.display = '';
       } else {
         const card = backupWrapper.querySelector('.card');
@@ -206,13 +210,13 @@
     const quickNavGrid = document.querySelector('div[style*="gridTemplateColumns:\"repeat(auto-fit, minmax(140px, 1fr))\""]');
     if(quickNavGrid){
       quickNavGrid.style.gridTemplateColumns = view === 'Inicio' ? 'repeat(auto-fit, minmax(120px, 1fr))' : quickNavGrid.style.gridTemplateColumns;
-      quickNavGrid.style.gap = '0.75rem';
+      quickNavGrid.style.gap = view === 'Inicio' ? '0.75rem' : quickNavGrid.style.gap;
     }
 
-    if(view === 'Inicio' && quickNavGrid){
+    if(quickNavGrid){
       const buttons = quickNavGrid.querySelectorAll('button');
       buttons.forEach(btn => {
-        btn.style.padding = '1.5rem 1rem';
+        btn.style.padding = view === 'Inicio' ? '1.5rem 1rem' : '1.25rem .75rem';
       });
     }
   }
