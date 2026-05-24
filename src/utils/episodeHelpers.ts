@@ -120,8 +120,14 @@ export const getStressColor = (level: number) => {
   return "bg-red-100 text-red-800 border-red-200";
 };
 
+export const parseLocalDate = (dateString: string): Date => {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
 export const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
+  if (!dateString) return '';
+  const date = parseLocalDate(dateString);
   return date.toLocaleDateString('es-ES', {
     weekday: 'long',
     day: 'numeric',
@@ -129,3 +135,4 @@ export const formatDate = (dateString: string) => {
     year: 'numeric'
   });
 };
+

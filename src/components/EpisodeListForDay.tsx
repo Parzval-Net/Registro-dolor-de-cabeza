@@ -7,13 +7,14 @@ import { Clock, Zap, Pill, AlertTriangle, Calendar } from "lucide-react";
 interface Props {
   date?: Date;
   entries: HeadacheEntry[];
+  onNewEntry?: (dateStr: string) => void;
 }
 
 const getIntensityColor = (intensity: number) => {
-  if (intensity <= 3) return "bg-emerald-500 text-white";
-  if (intensity <= 6) return "bg-orange-500 text-white";
-  if (intensity <= 8) return "bg-red-500 text-white";
-  return "bg-red-700 text-white";
+  if (intensity <= 3) return "bg-emerald-500 text-white shadow-sm shadow-emerald-500/10";
+  if (intensity <= 6) return "bg-orange-500 text-white shadow-sm shadow-orange-500/10";
+  if (intensity <= 8) return "bg-red-500 text-white shadow-sm shadow-red-500/10";
+  return "bg-red-700 text-white shadow-sm shadow-red-700/10";
 };
 
 const getIntensityText = (intensity: number) => {
@@ -23,7 +24,7 @@ const getIntensityText = (intensity: number) => {
   return "Extremo";
 };
 
-export function EpisodeListForDay({ date, entries }: Props) {
+export function EpisodeListForDay({ date, entries, onNewEntry }: Props) {
   if (!date) {
     return (
       <Card className="glass-card-dark border border-slate-300/30 shadow-lg">
@@ -140,6 +141,18 @@ export function EpisodeListForDay({ date, entries }: Props) {
                 )}
               </div>
             ))}
+            {onNewEntry && (
+              <button
+                onClick={() => {
+                  const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                  onNewEntry(dateStr);
+                }}
+                className="w-full mt-2 py-2.5 bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 active:scale-[0.98]"
+              >
+                <span>➕</span>
+                Registrar otro episodio
+              </button>
+            )}
           </div>
         ) : (
           <div className="text-center py-6 sm:py-8">
@@ -151,6 +164,18 @@ export function EpisodeListForDay({ date, entries }: Props) {
               <p className="text-xs text-slate-600 mt-1">
                 ¡Qué bueno! No hay migrañas registradas en esta fecha.
               </p>
+              {onNewEntry && (
+                <button
+                  onClick={() => {
+                    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                    onNewEntry(dateStr);
+                  }}
+                  className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-md shadow-indigo-600/10 transition-all duration-200 flex items-center justify-center gap-1.5 mx-auto active:scale-[0.98]"
+                >
+                  <span>📝</span>
+                  Registrar dolor para este día
+                </button>
+              )}
             </div>
           </div>
         )}

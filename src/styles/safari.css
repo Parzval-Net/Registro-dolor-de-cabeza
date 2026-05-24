@@ -26,12 +26,6 @@
       touch-action: manipulation;
     }
 
-    /* Estados hover optimizados */
-    button:hover,
-    [role="button"]:hover {
-      background-color: rgba(139, 92, 246, 0.1) !important;
-      border-color: rgb(139, 92, 246) !important;
-    }
 
     /* Contraste de texto mejorado */
     .text-white { color: rgb(255, 255, 255) !important; }

@@ -1,41 +1,50 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Quote, Sparkles } from 'lucide-react';
+import { Quote, Sparkles, RefreshCw } from 'lucide-react';
 import { getRandomQuote } from '@/data/principitoQuotes';
 
 const QuoteSection = () => {
   const [quote, setQuote] = useState('');
+  const [isRotating, setIsRotating] = useState(false);
 
   useEffect(() => {
     setQuote(getRandomQuote());
   }, []);
 
   const handleNewQuote = () => {
+    setIsRotating(true);
     setQuote(getRandomQuote());
+    setTimeout(() => setIsRotating(false), 600);
   };
 
   return (
-    <Card className="glass-card-dark border border-amber-200/50 bg-gradient-to-r from-amber-50/80 to-orange-50/80 overflow-hidden">
-      <CardContent className="p-6">
+    <Card className="glass-card border border-violet-100/50 bg-gradient-to-r from-violet-50/30 via-indigo-50/20 to-purple-50/30 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+      <CardContent className="p-4 sm:p-5">
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
-            <Quote className="h-6 w-6 text-white" />
+          <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-indigo-500 rounded-xl flex items-center justify-center shadow-md shadow-violet-500/10 flex-shrink-0">
+            <Quote className="h-5 w-5 text-white" />
           </div>
-          <div className="flex-1 space-y-3">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-600" />
-              <h3 className="text-sm font-bold text-amber-800">El Principito</h3>
+          <div className="flex-1 min-w-0 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-violet-500 animate-pulse" />
+                <h3 className="text-xs font-bold text-violet-600 uppercase tracking-wider font-outfit">Reflexión de Calma</h3>
+              </div>
+              <button
+                onClick={handleNewQuote}
+                className="text-slate-400 hover:text-indigo-600 transition-colors p-1 rounded-lg hover:bg-indigo-50/50"
+                title="Nueva reflexión"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 transition-transform duration-500 ${isRotating ? 'rotate-180' : ''}`} />
+              </button>
             </div>
-            <blockquote className="text-sm italic text-slate-700 leading-relaxed">
+            <blockquote className="text-sm italic text-slate-600 leading-relaxed font-sans pr-2">
               "{quote}"
             </blockquote>
-            <button
-              onClick={handleNewQuote}
-              className="text-xs text-amber-700 hover:text-amber-800 font-medium transition-colors"
-            >
-              Nueva cita ✨
-            </button>
+            <div className="text-[10px] font-semibold text-slate-400 text-right pr-2">
+              — El Principito
+            </div>
           </div>
         </div>
       </CardContent>

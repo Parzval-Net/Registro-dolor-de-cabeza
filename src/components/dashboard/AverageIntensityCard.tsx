@@ -1,33 +1,31 @@
 
 import { Activity } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 interface AverageIntensityCardProps {
   averageIntensity: number;
 }
 
 const getIntensityGradient = (intensity: number) => {
-  // Usamos solo gradientes violeta-rosas, eliminando los naranjas/amarillos
-  if (intensity <= 3) return 'from-violet-400 to-purple-500';
-  if (intensity <= 6) return 'from-fuchsia-400 to-pink-400';
+  if (intensity <= 3) return 'from-emerald-400 to-teal-500';
+  if (intensity <= 6) return 'from-amber-400 to-orange-500';
   if (intensity <= 8) return 'from-rose-400 to-pink-500';
-  return 'from-purple-700 to-fuchsia-700';
+  return 'from-purple-600 to-fuchsia-600';
 };
 
 const AverageIntensityCard = ({ averageIntensity }: AverageIntensityCardProps) => (
-  <div className="stat-beautiful">
-    <div className="flex items-center justify-between mb-6">
-      <h3 className="subheading-beautiful">Intensidad</h3>
-      <div className="w-14 h-14 rounded-2xl gradient-accent flex items-center justify-center shadow-lg">
-        <Activity className="h-7 w-7 text-white" />
+  <div className="stat-beautiful p-4 sm:p-6 rounded-2xl flex flex-col justify-between h-full">
+    <div className="flex items-center justify-between mb-4">
+      <h3 className="subheading-beautiful text-slate-500 font-semibold text-sm sm:text-base">Intensidad</h3>
+      <div className={`stat-icon-beautiful w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center bg-gradient-to-br ${getIntensityGradient(averageIntensity)} shadow-md shadow-pink-500/10`}>
+        <Activity className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
       </div>
     </div>
-    <div className="space-y-4">
-      <div className="stat-number-beautiful text-5xl">{averageIntensity.toFixed(1)}</div>
-      <p className="text-beautiful text-lg">promedio de 10</p>
-      <div className="w-full bg-muted rounded-full h-3">
+    <div className="space-y-3">
+      <div className="text-3xl sm:text-4xl font-bold text-slate-800 tracking-tight">{averageIntensity.toFixed(1)}</div>
+      <p className="text-slate-500 text-xs sm:text-sm font-medium">promedio de 10</p>
+      <div className="w-full bg-slate-100/80 dark:bg-slate-900/40 rounded-full h-1.5 overflow-hidden">
         <div
-          className="gradient-accent h-3 rounded-full transition-all duration-500"
+          className={`bg-gradient-to-r ${getIntensityGradient(averageIntensity)} h-1.5 rounded-full transition-all duration-500`}
           style={{ width: `${averageIntensity * 10}%` }}
         ></div>
       </div>

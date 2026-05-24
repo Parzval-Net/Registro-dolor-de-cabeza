@@ -40,11 +40,14 @@ const RecentEpisodesList = ({ entries, getIntensityGradient }: RecentEpisodesLis
                 </div>
                 <div className="space-y-1">
                   <p className="font-semibold text-slate-800">
-                    {new Date(entry.date).toLocaleDateString('es-ES', {
-                      weekday: 'long',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
+                    {(() => {
+                      const [year, month, day] = entry.date.split('-').map(Number);
+                      return new Date(year, month - 1, day).toLocaleDateString('es-ES', {
+                        weekday: 'long',
+                        month: 'long',
+                        day: 'numeric',
+                      });
+                    })()}
                   </p>
                   <p className="text-sm text-slate-500 flex items-center gap-2">
                     {entry.time && (

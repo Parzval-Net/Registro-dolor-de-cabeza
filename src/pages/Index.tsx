@@ -103,6 +103,7 @@ const Index = () => {
   const [user, setUser] = useState<ActiveUser | null>(null);
   const [entries, setEntries] = useState<HeadacheEntry[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [formInitialDate, setFormInitialDate] = useState<string | undefined>(undefined);
   const [currentView, setCurrentView] = useState<'dashboard' | 'calendar' | 'trends' | 'episodes' | 'admin'>('dashboard');
   const [appSettings, setAppSettings] = useState({
     appName: 'MigraCare',
@@ -300,6 +301,15 @@ const Index = () => {
     if (!ensureAuthenticated('Inicia sesión para registrar episodios')) {
       return;
     }
+    setFormInitialDate(undefined);
+    setShowForm(true);
+  };
+
+  const handleOpenFormWithDate = (dateStr: string) => {
+    if (!ensureAuthenticated('Inicia sesión para registrar episodios')) {
+      return;
+    }
+    setFormInitialDate(dateStr);
     setShowForm(true);
   };
 
@@ -531,7 +541,7 @@ const Index = () => {
           />
         );
       case 'calendar':
-        return <CalendarView entries={entries} />;
+        return <CalendarView entries={entries} onNewEntry={handleOpenFormWithDate} />;
       case 'trends':
         return <TrendsView entries={entries} />;
       case 'admin':

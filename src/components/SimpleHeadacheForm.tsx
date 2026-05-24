@@ -12,15 +12,16 @@ import { Checkbox } from '@/components/ui/checkbox';
 interface SimpleHeadacheFormProps {
   onSave: (entry: HeadacheEntry) => void;
   onCancel: () => void;
+  initialDate?: string;
 }
 
-const SimpleHeadacheForm = ({ onSave, onCancel }: SimpleHeadacheFormProps) => {
+const SimpleHeadacheForm = ({ onSave, onCancel, initialDate }: SimpleHeadacheFormProps) => {
   const [isExpress, setIsExpress] = useState(false);
   const isDark = false; // Exclusivo modo claro
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
+    date: initialDate || new Date().toISOString().split('T')[0],
     time: new Date().toTimeString().slice(0, 5),
     intensity: [5],
     medications: [] as string[],
