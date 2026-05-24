@@ -11,6 +11,7 @@ import GeneralTab from './admin/GeneralTab';
 import AppearanceTab from './admin/AppearanceTab';
 import DataTab from './admin/DataTab';
 import SecurityTab from './admin/SecurityTab';
+import DatabaseTab from './admin/DatabaseTab';
 import UserAvatar, { AVATAR_OPTIONS } from './UserAvatar';
 
 interface AdminSettings {
@@ -47,7 +48,7 @@ const AdminPanel = ({ user, onUserUpdate }: AdminPanelProps) => {
     timezone: 'America/Santiago',
     exportFormat: 'PDF'
   });
-  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'medications' | 'data' | 'security'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'medications' | 'data' | 'security' | 'database'>('general');
   const { toast } = useToast();
 
   // Verificación de autenticación de administrador
@@ -128,6 +129,8 @@ const AdminPanel = ({ user, onUserUpdate }: AdminPanelProps) => {
         return <DataTab settings={settings} onSettingsChange={setSettings} />;
       case 'security':
         return <SecurityTab onChangePassword={() => setShowChangePassword(true)} />;
+      case 'database':
+        return <DatabaseTab />;
       default:
         return null;
     }
@@ -335,16 +338,7 @@ const AdminPanel = ({ user, onUserUpdate }: AdminPanelProps) => {
                  ======================================== */
               <div>
                 {!isAdminAuthenticated ? (
-                  /* Authentication Gate if not logged in as Admin yet */
-                  <div className="bg-white/80 p-6 rounded-2xl border border-slate-200/50 shadow-sm max-w-md mx-auto my-4">
-                    <h2 className="text-center text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">
-                      Acceso Requerido
-                    </h2>
-                    <p className="text-center text-xs text-slate-600 mb-6">
-                      Para modificar la configuración visual, colores o base de datos de MigraCare, por favor ingresa la contraseña de administrador.
-                    </p>
-                    <AdminAuth onAuthenticated={() => setIsAdminAuthenticated(true)} />
-                  </div>
+                  <AdminAuth onAuthenticated={() => setIsAdminAuthenticated(true)} />
                 ) : (
                   /* Authenticated admin tab settings panel */
                   <div className="space-y-6">
@@ -370,7 +364,7 @@ const AdminPanel = ({ user, onUserUpdate }: AdminPanelProps) => {
                       </div>
                     </div>
 
-                    {activeTab !== 'medications' && activeTab !== 'security' && (
+                    {activeTab !== 'medications' && activeTab !== 'security' && activeTab !== 'database' && (
                       <div className="flex justify-end pt-2">
                         <button
                           onClick={handleSave}

@@ -1,10 +1,10 @@
 
 import { Button } from '@/components/ui/button';
-import { Globe, Palette, Pill, Type, Shield } from 'lucide-react';
+import { Globe, Palette, Pill, Type, Shield, Database } from 'lucide-react';
 
 interface AdminTabsProps {
-  activeTab: 'general' | 'appearance' | 'medications' | 'data' | 'security';
-  onTabChange: (tab: 'general' | 'appearance' | 'medications' | 'data' | 'security') => void;
+  activeTab: 'general' | 'appearance' | 'medications' | 'data' | 'security' | 'database';
+  onTabChange: (tab: 'general' | 'appearance' | 'medications' | 'data' | 'security' | 'database') => void;
 }
 
 const AdminTabs = ({ activeTab, onTabChange }: AdminTabsProps) => {
@@ -14,6 +14,7 @@ const AdminTabs = ({ activeTab, onTabChange }: AdminTabsProps) => {
     { id: 'medications' as const, label: 'Medicamentos', icon: Pill },
     { id: 'data' as const, label: 'Datos', icon: Type },
     { id: 'security' as const, label: 'Seguridad', icon: Shield },
+    { id: 'database' as const, label: 'Base de Datos', icon: Database },
   ];
 
   return (

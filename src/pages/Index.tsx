@@ -11,6 +11,14 @@ import AdminPanel from '@/components/AdminPanel';
 import SimpleHeadacheForm from '@/components/SimpleHeadacheForm';
 import AuthGate, { AuthMode, LoginPayload, RegisterPayload } from '@/components/AuthGate';
 import { HeadacheEntry } from '@/types/headache';
+import {
+  isSupabaseConfigured,
+  supabase,
+  getHeadacheEntries,
+  saveHeadacheEntry,
+  deleteHeadacheEntry,
+  syncLocalEntriesToCloud
+} from '@/lib/supabase';
 
 const USERS_STORAGE_KEY = 'migracare-users-v1';
 const SESSION_STORAGE_KEY = 'migracare-session-v1';
@@ -33,6 +41,7 @@ interface ActiveUser {
   key: string;
   name: string;
   email: string;
+  avatar?: string;
 }
 
 const getDatabase = (): MigracareDatabase => {
@@ -82,6 +91,70 @@ const clearSession = () => {
   sessionStorage.removeItem(SESSION_STORAGE_KEY);
 };
 
+const sha256Fallback = (ascii: string): string => {
+  function rightRotate(value: number, amount: number) {
+    return (value >>> amount) | (value << (32 - amount));
+  }
+  const words: number[] = [];
+  const asciiLength = ascii.length * 8;
+  let result = '';
+  const hash = [
+    0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+  ];
+  const k = [
+    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+  ];
+  const charCodes = [];
+  for (let i = 0; i < ascii.length; i++) {
+    charCodes.push(ascii.charCodeAt(i));
+  }
+  charCodes.push(0x80);
+  while (charCodes.length % 64 !== 56) {
+    charCodes.push(0);
+  }
+  for (let i = 7; i >= 0; i--) {
+    charCodes.push((asciiLength >>> (i * 8)) & 0xff);
+  }
+  for (let i = 0; i < charCodes.length; i += 4) {
+    words.push(
+      (charCodes[i] << 24) |
+      (charCodes[i + 1] << 16) |
+      (charCodes[i + 2] << 8) |
+      charCodes[i + 3]
+    );
+  }
+  const w = new Array(64);
+  for (let i = 0; i < words.length; i += 16) {
+    let a = hash[0], b = hash[1], c = hash[2], d = hash[3];
+    let e = hash[4], f = hash[5], g = hash[6], h = hash[7];
+    for (let j = 0; j < 64; j++) {
+      if (j < 16) {
+        w[j] = words[i + j];
+      } else {
+        const s0 = rightRotate(w[j - 15], 7) ^ rightRotate(w[j - 15], 18) ^ (w[j - 15] >>> 3);
+        const s1 = rightRotate(w[j - 2], 17) ^ rightRotate(w[j - 2], 19) ^ (w[j - 2] >>> 10);
+        w[j] = (w[j - 16] + s0 + w[j - 7] + s1) | 0;
+      }
+      const temp1 = (h + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25)) + ((e & f) ^ (~e & g)) + k[j] + w[j]) | 0;
+      const temp2 = ((rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) | 0;
+      h = g; g = f; f = e; e = (d + temp1) | 0; d = c; c = b; b = a; a = (temp1 + temp2) | 0;
+    }
+    hash[0] = (hash[0] + a) | 0; hash[1] = (hash[1] + b) | 0; hash[2] = (hash[2] + c) | 0; hash[3] = (hash[3] + d) | 0;
+    hash[4] = (hash[4] + e) | 0; hash[5] = (hash[5] + f) | 0; hash[6] = (hash[6] + g) | 0; hash[7] = (hash[7] + h) | 0;
+  }
+  for (let i = 0; i < 8; i++) {
+    result += (hash[i] >>> 0).toString(16).padStart(8, '0');
+  }
+  return result;
+};
+
 const hashPassword = async (password: string): Promise<string> => {
   if (window.crypto?.subtle) {
     const encoder = new TextEncoder();
@@ -90,7 +163,7 @@ const hashPassword = async (password: string): Promise<string> => {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
   }
-  return btoa(password);
+  return sha256Fallback(password);
 };
 
 const getFirstName = (name: string) => {
@@ -102,6 +175,7 @@ const getFirstName = (name: string) => {
 const Index = () => {
   const [user, setUser] = useState<ActiveUser | null>(null);
   const [entries, setEntries] = useState<HeadacheEntry[]>([]);
+  const [dbConnected, setDbConnected] = useState(isSupabaseConfigured);
   const [showForm, setShowForm] = useState(false);
   const [formInitialDate, setFormInitialDate] = useState<string | undefined>(undefined);
   const [currentView, setCurrentView] = useState<'dashboard' | 'calendar' | 'trends' | 'episodes' | 'admin'>('dashboard');
@@ -153,6 +227,7 @@ const Index = () => {
     }
     const handleSettingsUpdate = () => {
       loadAppSettings();
+      setDbConnected(isSupabaseConfigured);
     };
 
     window.addEventListener('admin-settings-updated', handleSettingsUpdate);
@@ -167,11 +242,21 @@ const Index = () => {
       return;
     }
     const db = getDatabase();
-    const record = db.users[user.key];
+    // Key by email to support both Supabase (where user.key is UUID) and local (where key is email)
+    const localKey = user.email || user.key;
+    let record = db.users[localKey];
     if (!record) {
-      return;
+      record = {
+        key: localKey,
+        email: user.email,
+        name: user.name,
+        passwordHash: '',
+        entries: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
     }
-    db.users[user.key] = {
+    db.users[localKey] = {
       ...record,
       entries,
       updatedAt: new Date().toISOString()
@@ -244,47 +329,111 @@ const Index = () => {
       setEntries([]);
       return;
     }
-    const db = getDatabase();
-    const record = db.users[user.key];
-    if (record && Array.isArray(record.entries)) {
-      setEntries([...record.entries]);
-    } else {
-      setEntries([]);
-    }
-  }, [user]);
+
+    const loadUserEntries = async () => {
+      // Si Supabase está configurado, intentamos descargar de la nube primero
+      if (dbConnected && supabase) {
+        try {
+          const cloudEntries = await getHeadacheEntries(user.key);
+          setEntries(cloudEntries);
+          return;
+        } catch (error) {
+          console.error('Error al cargar episodios desde Supabase, intentando local:', error);
+        }
+      }
+
+      // Si no está configurado o falla, caemos de vuelta al caché local
+      const db = getDatabase();
+      const localKey = user.email || user.key;
+      const record = db.users[localKey];
+      if (record && Array.isArray(record.entries)) {
+        setEntries([...record.entries]);
+      } else {
+        setEntries([]);
+      }
+    };
+
+    loadUserEntries();
+  }, [user, dbConnected]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
     }
-    const payload = localStorage.getItem(SESSION_STORAGE_KEY) || sessionStorage.getItem(SESSION_STORAGE_KEY);
-    if (!payload) {
-      return;
-    }
-    try {
-      const { key } = JSON.parse(payload);
-      if (!key) {
-        clearSession();
+
+    const checkSession = async () => {
+      // 1. Si Supabase está activo, intentamos recuperar la sesión nativa de Supabase primero
+      if (dbConnected && supabase) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session && session.user) {
+            const sUser = session.user;
+            const userName = sUser.user_metadata?.name || getFirstName(sUser.email || 'usuario');
+            setUser({
+              key: sUser.id,
+              name: userName,
+              email: sUser.email || '',
+              avatar: sUser.user_metadata?.avatar || 'calm-mind'
+            });
+            
+            // Cargar datos
+            const cloudEntries = await getHeadacheEntries(sUser.id);
+            setEntries(cloudEntries);
+
+            // Sincronizar episodios registrados offline bajo este correo si existen
+            if (sUser.email) {
+              const db = getDatabase();
+              const localRecord = db.users[sUser.email];
+              if (localRecord && Array.isArray(localRecord.entries) && localRecord.entries.length > 0) {
+                await syncLocalEntriesToCloud(sUser.id, localRecord.entries);
+                const syncedEntries = await getHeadacheEntries(sUser.id);
+                setEntries(syncedEntries);
+                db.users[sUser.email].entries = [];
+                setDatabase(db);
+              }
+            }
+            return;
+          }
+        } catch (error) {
+          console.error('Error restaurando sesión de Supabase:', error);
+        }
+      }
+
+      // 2. Fallback a sesión local tradicional de localStorage
+      const payload = localStorage.getItem(SESSION_STORAGE_KEY) || sessionStorage.getItem(SESSION_STORAGE_KEY);
+      if (!payload) {
+        // Si no hay sesión local y cambiamos de base de datos, limpiamos el usuario anterior
+        setUser(null);
+        setEntries([]);
         return;
       }
-      const db = getDatabase();
-      const record = db.users[key];
-      if (!record) {
+      try {
+        const { key } = JSON.parse(payload);
+        if (!key) {
+          clearSession();
+          return;
+        }
+        const db = getDatabase();
+        const record = db.users[key];
+        if (!record) {
+          clearSession();
+          return;
+        }
+        setUser({ 
+          key: record.key, 
+          name: record.name, 
+          email: record.email,
+          avatar: (record as any).avatar || 'calm-mind'
+        });
+        setEntries(Array.isArray(record.entries) ? [...record.entries] : []);
+      } catch (error) {
+        console.error('Error en auto-login local', error);
         clearSession();
-        return;
       }
-      setUser({ 
-        key: record.key, 
-        name: record.name, 
-        email: record.email,
-        avatar: (record as any).avatar || 'calm-mind'
-      });
-      setEntries(Array.isArray(record.entries) ? [...record.entries] : []);
-    } catch (error) {
-      console.error('Error en auto-login', error);
-      clearSession();
-    }
-  }, []);
+    };
+
+    checkSession();
+  }, [dbConnected]);
 
   const ensureAuthenticated = (message = 'Inicia sesión para continuar') => {
     if (!user) {
@@ -331,7 +480,7 @@ const Index = () => {
     }
   }, [user, toast]);
 
-  const handleSaveEntry = (entry: HeadacheEntry) => {
+  const handleSaveEntry = async (entry: HeadacheEntry) => {
     if (!ensureAuthenticated('Inicia sesión para registrar episodios')) {
       return;
     }
@@ -342,24 +491,60 @@ const Index = () => {
       description: "Tu episodio de migraña ha sido registrado exitosamente.",
     });
 
+    if (dbConnected && supabase) {
+      try {
+        await saveHeadacheEntry(user.key, entry);
+      } catch (err) {
+        console.error('Error al guardar episodio en la nube:', err);
+        toast({
+          title: "Sincronización pendiente",
+          description: "Guardado localmente. Se guardará en la nube al restaurar conexión.",
+        });
+      }
+    }
+
     // Haptic feedback if available
     if ('vibrate' in navigator) {
       navigator.vibrate(100);
     }
   };
 
-  const handleUpdateEntry = (updatedEntry: HeadacheEntry) => {
+  const handleUpdateEntry = async (updatedEntry: HeadacheEntry) => {
     if (!ensureAuthenticated()) {
       return;
     }
     setEntries(prev => prev.map(entry => entry.id === updatedEntry.id ? updatedEntry : entry));
+
+    if (dbConnected && supabase) {
+      try {
+        await saveHeadacheEntry(user.key, updatedEntry);
+      } catch (err) {
+        console.error('Error al actualizar episodio en la nube:', err);
+        toast({
+          title: "Sincronización pendiente",
+          description: "Actualizado localmente. Se sincronizará más tarde.",
+        });
+      }
+    }
   };
 
-  const handleDeleteEntry = (entryId: string) => {
+  const handleDeleteEntry = async (entryId: string) => {
     if (!ensureAuthenticated()) {
       return;
     }
     setEntries(prev => prev.filter(entry => entry.id !== entryId));
+
+    if (dbConnected && supabase) {
+      try {
+        await deleteHeadacheEntry(user.key, entryId);
+      } catch (err) {
+        console.error('Error al eliminar episodio de la nube:', err);
+        toast({
+          title: "Sincronización pendiente",
+          description: "Eliminado localmente. Se sincronizará más tarde.",
+        });
+      }
+    }
   };
 
   const normalizeEmail = (value: string) => value.trim().toLowerCase();
@@ -376,6 +561,61 @@ const Index = () => {
     setAuthBusy(true);
     try {
       const normalizedEmail = normalizeEmail(email);
+
+      if (dbConnected && supabase) {
+        // Autenticar mediante Supabase Auth
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: normalizedEmail,
+          password
+        });
+
+        if (error) {
+          toast({
+            title: 'Credenciales incorrectas',
+            description: error.message || 'La contraseña no coincide o la cuenta no existe.',
+          });
+          return;
+        }
+
+        if (data.user) {
+          const sUser = data.user;
+          const name = sUser.user_metadata?.name || sUser.email?.split('@')[0] || 'usuario';
+          
+          setUser({
+            key: sUser.id,
+            name: name,
+            email: sUser.email || '',
+            avatar: sUser.user_metadata?.avatar || 'calm-mind'
+          });
+
+          // Sincronizar episodios locales si existen offline
+          const db = getDatabase();
+          const localRecord = db.users[normalizedEmail];
+          const localEntries = localRecord?.entries || [];
+
+          try {
+            if (localEntries.length > 0) {
+              await syncLocalEntriesToCloud(sUser.id, localEntries);
+              db.users[normalizedEmail].entries = [];
+              setDatabase(db);
+            }
+            const cloudEntries = await getHeadacheEntries(sUser.id);
+            setEntries(cloudEntries);
+          } catch (syncErr) {
+            console.error('Error de sincronización inicial al iniciar sesión:', syncErr);
+          }
+
+          setCurrentView('dashboard');
+          setShowForm(false);
+          toast({
+            title: `Bienvenido de nuevo, ${getFirstName(name)}!`,
+            description: 'Tus registros en la nube están listos.',
+          });
+          return;
+        }
+      }
+
+      // FALLBACK LOCAL
       const db = getDatabase();
       const record = db.users[normalizedEmail];
       if (!record) {
@@ -407,7 +647,7 @@ const Index = () => {
       setShowForm(false);
       toast({
         title: `Bienvenido de nuevo, ${getFirstName(record.name)}!`,
-        description: 'Tus registros están listos.',
+        description: 'Tus registros locales están listos.',
       });
     } catch (error) {
       console.error('Error al iniciar sesión', error);
@@ -446,6 +686,52 @@ const Index = () => {
     setAuthBusy(true);
     try {
       const normalizedEmail = normalizeEmail(email);
+
+      if (dbConnected && supabase) {
+        // Registrar en Supabase Auth
+        const { data, error } = await supabase.auth.signUp({
+          email: normalizedEmail,
+          password,
+          options: {
+            data: {
+              name: name.trim(),
+              avatar: 'calm-mind'
+            }
+          }
+        });
+
+        if (error) {
+          toast({
+            title: 'No se pudo crear la cuenta',
+            description: error.message || 'Intenta con otro correo o revisa tus datos.',
+          });
+          return;
+        }
+
+        if (data.user) {
+          const sUser = data.user;
+          setUser({
+            key: sUser.id,
+            name: name.trim(),
+            email: sUser.email || '',
+            avatar: 'calm-mind'
+          });
+          setEntries([]);
+          setCurrentView('dashboard');
+          setShowForm(false);
+          
+          const isConfirmed = data.session !== null;
+          toast({
+            title: `¡Bienvenido a MigraCare, ${getFirstName(name)}!`,
+            description: isConfirmed 
+              ? 'Cuenta creada exitosamente en la nube.'
+              : 'Cuenta creada. Por favor verifica tu correo para comenzar.',
+          });
+          return;
+        }
+      }
+
+      // FALLBACK LOCAL
       const db = getDatabase();
       if (db.users[normalizedEmail]) {
         toast({
@@ -495,7 +781,14 @@ const Index = () => {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (dbConnected && supabase) {
+      try {
+        await supabase.auth.signOut();
+      } catch (err) {
+        console.error('Error signing out from Supabase:', err);
+      }
+    }
     clearSession();
     setUser(null);
     setEntries([]);
@@ -508,21 +801,42 @@ const Index = () => {
     });
   };
 
-  const handleUserUpdate = (fields: { avatar: string }) => {
+  const handleUserUpdate = async (fields: { avatar: string }) => {
     if (!user) return;
     const updatedUser = { ...user, ...fields };
     setUser(updatedUser);
     
-    // Guardar en la base de datos local
+    // Guardar en la base de datos local (fallback offline)
     const db = getDatabase();
-    const record = db.users[user.key];
+    const localKey = user.email || user.key;
+    const record = db.users[localKey];
     if (record) {
-      db.users[user.key] = {
+      db.users[localKey] = {
         ...record,
         ...fields,
         updatedAt: new Date().toISOString()
       } as any;
       setDatabase(db);
+    }
+
+    if (dbConnected && supabase) {
+      try {
+        const { error } = await supabase.auth.updateUser({
+          data: { avatar: fields.avatar }
+        });
+        if (error) throw error;
+        toast({
+          title: 'Perfil actualizado',
+          description: 'Tu foto de perfil se ha guardado en la nube.',
+        });
+      } catch (err) {
+        console.error('Error al actualizar avatar en Supabase:', err);
+        toast({
+          title: 'Perfil actualizado localmente',
+          description: 'Se guardó en el dispositivo. Sincronización pendiente.',
+        });
+      }
+    } else {
       toast({
         title: 'Perfil actualizado',
         description: 'Tu foto de perfil se ha guardado exitosamente.',

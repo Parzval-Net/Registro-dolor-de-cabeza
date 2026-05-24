@@ -1,7 +1,7 @@
-
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Download, Upload, Trash2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Download, Upload, Trash2, Database, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface AdminSettings {
@@ -35,8 +35,10 @@ const DataTab = ({ settings, onSettingsChange }: DataTabProps) => {
     try {
       const data = {
         settings: localStorage.getItem('admin-settings'),
-        entries: localStorage.getItem('headache-entries'),
-        medications: localStorage.getItem('custom-medications')
+        medications: localStorage.getItem('custom-medications'),
+        users: localStorage.getItem('migracare-users-v1'),
+        supabaseUrl: localStorage.getItem('supabase-url'),
+        supabaseAnonKey: localStorage.getItem('supabase-anon-key')
       };
 
       const dataStr = JSON.stringify(data, null, 2);
@@ -45,20 +47,20 @@ const DataTab = ({ settings, onSettingsChange }: DataTabProps) => {
       
       const link = document.createElement('a');
       link.href = url;
-      link.download = `migracare-backup-${new Date().toISOString().split('T')[0]}.json`;
+      link.download = `migracare-respaldo-${new Date().toISOString().split('T')[0]}.json`;
       link.click();
       
       URL.revokeObjectURL(url);
 
       toast({
-        title: "Datos exportados",
-        description: "La copia de seguridad se ha descargado exitosamente."
+        title: "Copia de seguridad creada",
+        description: "El archivo JSON de respaldo se ha descargado exitosamente."
       });
     } catch (error) {
-      console.error('Error exporting data:', error);
+      console.error('Error al exportar datos:', error);
       toast({
-        title: "Error",
-        description: "No se pudo exportar los datos.",
+        title: "Error de exportación",
+        description: "No se pudo generar la copia de seguridad de la aplicación.",
         variant: "destructive"
       });
     }
@@ -74,21 +76,26 @@ const DataTab = ({ settings, onSettingsChange }: DataTabProps) => {
         const data = JSON.parse(e.target?.result as string);
         
         if (data.settings) localStorage.setItem('admin-settings', data.settings);
-        if (data.entries) localStorage.setItem('headache-entries', data.entries);
         if (data.medications) localStorage.setItem('custom-medications', data.medications);
-
-        // Reload the page to apply changes
-        window.location.reload();
+        if (data.users) localStorage.setItem('migracare-users-v1', data.users);
+        if (data.supabaseUrl) localStorage.setItem('supabase-url', data.supabaseUrl);
+        if (data.supabaseAnonKey) localStorage.setItem('supabase-anon-key', data.supabaseAnonKey);
 
         toast({
-          title: "Datos importados",
-          description: "Los datos se han restaurado exitosamente."
+          title: "Datos restaurados con éxito",
+          description: "La base de datos y la configuración han sido importadas. Reiniciando...",
         });
+
+        // Recargar la página tras 1.5s para aplicar todos los cambios de sesión y base
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+
       } catch (error) {
-        console.error('Error importing data:', error);
+        console.error('Error al importar datos:', error);
         toast({
-          title: "Error",
-          description: "El archivo no es válido o está corrupto.",
+          title: "Error de restauración",
+          description: "El archivo seleccionado no es un respaldo válido de MigraCare.",
           variant: "destructive"
         });
       }
@@ -97,84 +104,126 @@ const DataTab = ({ settings, onSettingsChange }: DataTabProps) => {
   };
 
   const clearAllData = () => {
-    if (confirm('¿Estás seguro de que quieres eliminar todos los datos? Esta acción no se puede deshacer.')) {
-      localStorage.removeItem('headache-entries');
+    if (confirm('🚨 ¡ATENCIÓN! ¿Estás seguro de que quieres eliminar TODOS los datos locales? Esto incluye cuentas locales, episodios registrados, vademécum de medicamentos y claves de base de datos. Esta acción no se puede deshacer.')) {
+      localStorage.removeItem('migracare-users-v1');
+      localStorage.removeItem('migracare-session-v1');
       localStorage.removeItem('custom-medications');
+      localStorage.removeItem('supabase-url');
+      localStorage.removeItem('supabase-anon-key');
+      localStorage.removeItem('admin-settings');
+      localStorage.removeItem('admin-authenticated');
       
       toast({
-        title: "Datos eliminados",
-        description: "Todos los datos han sido eliminados."
+        title: "Reinicio de fábrica completado",
+        description: "Se han eliminado por completo todos los registros y configuraciones locales.",
       });
 
-      // Reload to reflect changes
-      window.location.reload();
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
     }
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="space-y-2">
-        <Label className="text-slate-800 font-bold text-sm sm:text-base">
-          Formato de Exportación
-        </Label>
-        <select
-          value={settings.exportFormat}
-          onChange={e => updateSetting('exportFormat', e.target.value)}
-          className="w-full px-3 py-2 sm:py-3 border-2 border-slate-400 rounded-xl bg-white text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 hover:border-slate-500 transition-colors mobile-input"
-        >
-          <option value="JSON">JSON</option>
-          <option value="CSV">CSV</option>
-          <option value="PDF">PDF</option>
-        </select>
-        <p className="text-xs text-slate-600">Formato predeterminado para exportar datos</p>
-      </div>
-
-      <div className="space-y-4 pt-4 border-t border-slate-300">
-        <h3 className="text-slate-800 font-bold text-base">Gestión de Datos</h3>
+    <div className="space-y-6 animate-fade-in">
+      
+      {/* SECCIÓN 1: CONFIGURACIÓN GENERAL DE EXPORTACIONES */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Button
-            onClick={exportData}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-bold mobile-button"
-          >
-            <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-            Exportar
-          </Button>
+        <div className="md:col-span-2 space-y-4">
+          <Card className="border border-slate-200 shadow-sm rounded-2xl overflow-hidden bg-white">
+            <CardHeader className="pb-3 border-b border-slate-50">
+              <CardTitle className="text-base font-bold text-slate-800 flex items-center gap-2" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                <Database className="w-5 h-5 text-indigo-500" />
+                <span>Gestión de Copias de Seguridad</span>
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Exporta la base de datos completa de pacientes, vademécum e historial clínico o restáuralos a partir de un respaldo previo.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-5 space-y-5">
+              
+              <div className="space-y-1.5">
+                <Label htmlFor="exportFormat" className="text-xs font-bold text-slate-600 block">
+                  Formato de Descarga Predeterminado
+                </Label>
+                <select
+                  id="exportFormat"
+                  value={settings.exportFormat}
+                  onChange={e => updateSetting('exportFormat', e.target.value)}
+                  className="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white font-semibold transition-all"
+                >
+                  <option value="JSON">JSON (Respaldo Completo del Sistema)</option>
+                  <option value="CSV">CSV (Hojas de Cálculo / Excel)</option>
+                  <option value="PDF">PDF (Reportes Clínicos Imprimibles)</option>
+                </select>
+                <p className="text-[10px] text-slate-400">
+                  Nota: Las funciones de importación de sistema solo admiten el formato JSON oficial generado por esta consola.
+                </p>
+              </div>
 
-          <div className="relative">
-            <input
-              type="file"
-              accept=".json"
-              onChange={importData}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              id="import-file"
-            />
-            <Button
-              asChild
-              className="bg-green-500 hover:bg-green-600 text-white font-bold mobile-button w-full"
-            >
-              <label htmlFor="import-file" className="cursor-pointer flex items-center justify-center">
-                <Upload className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-                Importar
-              </label>
-            </Button>
-          </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <Button
+                  onClick={exportData}
+                  className="text-xs rounded-xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-all flex items-center justify-center gap-1.5 py-2.5 cursor-pointer"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Exportar Respaldo</span>
+                </Button>
 
-          <Button
-            onClick={clearAllData}
-            variant="destructive"
-            className="font-bold mobile-button"
-          >
-            <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-            Limpiar
-          </Button>
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept=".json"
+                    onChange={importData}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    id="import-file"
+                  />
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="w-full text-xs rounded-xl font-bold border-emerald-200 text-emerald-600 hover:bg-emerald-50/50 bg-white transition-all flex items-center justify-center gap-1.5 py-2.5 cursor-pointer"
+                  >
+                    <label htmlFor="import-file">
+                      <Upload className="w-4 h-4" />
+                      <span>Restaurar Respaldo</span>
+                    </label>
+                  </Button>
+                </div>
+              </div>
+
+            </CardContent>
+          </Card>
         </div>
 
-        <p className="text-xs text-slate-600 mt-2">
-          Exporta tus datos para crear copias de seguridad, importa desde un archivo de respaldo previo, 
-          o limpia todos los datos para empezar de nuevo.
-        </p>
+        {/* ALERTA DE SEGURIDAD / ELIMINACIÓN */}
+        <div className="space-y-4">
+          <Card className="border border-red-200 shadow-sm rounded-2xl overflow-hidden bg-red-50/40">
+            <CardHeader className="pb-3 border-b border-red-100 flex items-center gap-2">
+              <CardTitle className="text-xs sm:text-sm font-bold text-red-800 flex items-center gap-1.5" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                <AlertTriangle className="w-4.5 h-4.5 text-red-500 shrink-0" />
+                <span>Zona de Peligro</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 space-y-4 text-xs text-red-800 leading-relaxed">
+              <p>
+                El reinicio de fábrica limpia por completo el motor de almacenamiento de MigraCare en este navegador web. Se borrarán todas las contraseñas hasheadas y registros de pacientes.
+              </p>
+              
+              <Button
+                onClick={clearAllData}
+                variant="destructive"
+                className="w-full text-xs rounded-xl font-bold bg-red-600 hover:bg-red-700 text-white shadow-sm transition-all flex items-center justify-center gap-1.5 py-2.5 cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Reinicio de Fábrica</span>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
       </div>
+
     </div>
   );
 };

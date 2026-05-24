@@ -18,7 +18,6 @@ const MobileBottomNav = ({ currentView, onViewChange }: MobileBottomNavProps) =>
   return (
     <nav 
       style={{
-        display: 'block',
         position: 'fixed',
         bottom: 0,
         left: '50%',
@@ -32,7 +31,7 @@ const MobileBottomNav = ({ currentView, onViewChange }: MobileBottomNavProps) =>
         height: '80px',
         paddingBottom: 'calc( env(safe-area-inset-bottom) + 4px )'
       }}
-      className="lg:hidden"
+      className="block lg:hidden"
     >
       <div 
         style={{
