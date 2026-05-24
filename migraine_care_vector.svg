@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="100%" height="100%">
+  <!-- Definitions for gradients, shadows, and filters -->
+  <defs>
+    <!-- Background Radial Glow -->
+    <radialGradient id="bgGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    
+    <!-- Left Lobe Gradient: Calming Violet/Blue -->
+    <linearGradient id="leftLobeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a5b4fc"/> <!-- Indigo 300 -->
+      <stop offset="50%" stop-color="#818cf8"/> <!-- Indigo 400 -->
+      <stop offset="100%" stop-color="#6366f1"/> <!-- Indigo 500 -->
+    </linearGradient>
+    
+    <!-- Right Lobe Gradient: Soothing Teal/Emerald (Pain Relief) -->
+    <linearGradient id="rightLobeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6ee7b7"/> <!-- Emerald 300 (Cooling/Relief) -->
+      <stop offset="50%" stop-color="#34d399"/> <!-- Emerald 400 -->
+      <stop offset="100%" stop-color="#059669"/> <!-- Emerald 600 -->
+    </linearGradient>
+    
+    <!-- Glowing Aura for Calm state -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="25" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    
+    <!-- Drop Shadow for clinical depth -->
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="125%">
+      <feDropShadow dx="0" dy="15" stdDeviation="20" flood-color="#0f172a" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- Glowing background -->
+  <circle cx="400" cy="400" r="320" fill="url(#bgGlow)"/>
+
+  <!-- Protective outer circular path (Migraine tracking / wellness loop) -->
+  <circle cx="400" cy="400" r="280" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-opacity="0.3" stroke-dasharray="10 6"/>
+  <circle cx="400" cy="400" r="260" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.15"/>
+  
+  <!-- Outer orbital dots representing tracking data & relief checkpoints -->
+  <circle cx="400" cy="120" r="5" fill="#6ee7b7" filter="url(#glow)"/>
+  <circle cx="680" cy="400" r="6" fill="#a5b4fc" filter="url(#glow)"/>
+  <circle cx="120" cy="400" r="4" fill="#34d399" filter="url(#glow)"/>
+  <circle cx="400" cy="680" r="5.5" fill="#818cf8" filter="url(#glow)"/>
+
+  <!-- Centered Calm Brain Vector -->
+  <g transform="translate(400, 400)" filter="url(#cardShadow)">
+    
+    <!-- Soft background aura of the brain (calm state) -->
+    <path d="M -120,-80 C -120,-170 0,-170 0,-80 C 0,-170 120,-170 120,-80 C 125,-20 80,80 0,140 C -80,80 -125,-20 -120,-80 Z" fill="#ffffff" fill-opacity="0.08" filter="url(#glow)"/>
+
+    <!-- LEFT LOBE (Precision/Analysis/Indigo) -->
+    <!-- Stylized curved layers showing mental organization & migraine tracking -->
+    <!-- Layer 1: Outer curves -->
+    <path d="M -15,-130 
+             C -60,-130 -130,-90 -130,-40 
+             C -130,-10 -100,20 -100,50 
+             C -100,80 -50,110 -15,130 
+             C -10,130 -10,115 -15,100
+             C -45,85 -80,60 -80,30
+             C -80,10 -100,-20 -100,-40
+             C -100,-75 -50,-100 -15,-105 Z" 
+          fill="url(#leftLobeGrad)"/>
+          
+    <!-- Layer 2: Inner curve -->
+    <path d="M -12,-90
+             C -40,-90 -85,-70 -85,-35
+             C -85,-15 -65,10 -65,30
+             C -65,55 -35,75 -12,90
+             C -8,90 -8,80 -12,70
+             C -30,60 -50,45 -50,25
+             C -50,10 -65,-10 -65,-25
+             C -65,-50 -35,-68 -12,-72 Z"
+          fill="#c7d2fe" fill-opacity="0.9"/>
+
+    <!-- Layer 3: Central structural curve -->
+    <path d="M -8,-55
+             C -25,-55 -55,-40 -55,-15
+             C -55,-3 -40,15 -40,30
+             C -40,42 -25,55 -8,65
+             C -6,65 -6,58 -8,50
+             C -20,42 -30,32 -30,22
+             C -30,12 -38,0 -38,-10
+             C -38,-28 -20,-38 -8,-40 Z"
+          fill="#e0e7ff"/>
+
+    <!-- RIGHT LOBE (Nature/Healing/Therapeutic Cooling Teal) -->
+    <!-- Soft organic leaf-like neural segments representing health and recovery -->
+    <!-- Layer 1: Outer curves -->
+    <path d="M 15,-130 
+             C 60,-130 130,-90 130,-40 
+             C 130,-10 100,20 100,50 
+             C 100,80 50,110 15,130 
+             C 10,130 10,115 15,100
+             C 45,85 80,60 80,30
+             C 80,10 100,-20 100,-40
+             C 100,-75 50,-100 15,-105 Z" 
+          fill="url(#rightLobeGrad)"/>
+
+    <!-- Layer 2: Inner curve -->
+    <path d="M 12,-90
+             C 40,-90 85,-70 85,-35
+             C 85,-15 65,10 65,30
+             C 65,55 35,75 12,90
+             C 8,90 8,80 12,70
+             C 30,60 50,45 50,25
+             C 50,10 65,-10 65,-25
+             C 65,-50 35,-68 12,-72 Z"
+          fill="#a7f3d0" fill-opacity="0.9"/>
+
+    <!-- Layer 3: Central structural curve -->
+    <path d="M 8,-55
+             C 25,-55 55,-40 55,-15
+             C 55,-3 40,15 40,30
+             C 40,42 25,55 8,65
+             C 6,65 6,58 8,50
+             C 20,42 30,32 30,22
+             C 30,12 38,0 38,-10
+             C 38,-28 20,-38 8,-40 Z"
+          fill="#d1fae5"/>
+
+    <!-- CENTER LINE: Soothing light pathway -->
+    <path d="M 0,-115 C 5,-115 5,115 0,115 C -5,115 -5,-115 0,-115 Z" fill="#ffffff" fill-opacity="0.5"/>
+
+    <!-- Sparkles of Mental Clarity (Migraine GONE / Relief) -->
+    <!-- Sparkle 1: Top Right -->
+    <path d="M 120,-110 Q 120,-90 140,-90 Q 120,-90 120,-70 Q 120,-90 100,-90 Q 120,-90 120,-110 Z" fill="#34d399" filter="url(#glow)"/>
+    
+    <!-- Sparkle 2: Left Center -->
+    <path d="M -130,20 Q -130,35 -115,35 Q -130,35 -130,50 Q -130,35 -145,35 Q -130,35 -130,20 Z" fill="#818cf8" filter="url(#glow)"/>
+
+    <!-- Sparkle 3: Bottom Right (Small) -->
+    <path d="M 90,80 Q 90,90 100,90 Q 90,90 90,100 Q 90,90 80,90 Q 90,90 90,80 Z" fill="#a7f3d0" filter="url(#glow)"/>
+
+    <!-- HEART / WELLNESS CENTRAL CORE -->
+    <!-- Small elegant medical cross or heart at the center of neural wellness -->
+    <g transform="translate(0, 0)">
+      <!-- Soft back glow for the icon -->
+      <circle cx="0" cy="0" r="28" fill="#ffffff" filter="url(#glow)"/>
+      <circle cx="0" cy="0" r="22" fill="#4f46e5" stroke="#ffffff" stroke-width="2"/>
+      
+      <!-- Heart icon -->
+      <path d="M 0,8 C -1.5,8 -8,2.5 -8,-2 C -8,-6 -4.5,-9 -1,-9 C 1,-9 2.5,-7.5 3,-6 C 3.5,-7.5 5,-9 7,-9 C 10.5,-9 14,-6 14,-2 C 14,2.5 7.5,8 6,8 Z" 
+            fill="#ffffff" 
+            transform="scale(0.8) translate(-3, -1)"/>
+    </g>
+  </g>
+</svg>
