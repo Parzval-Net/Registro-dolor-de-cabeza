@@ -139,6 +139,10 @@ const Index = () => {
 
   useEffect(() => {
     loadAppSettings();
+    if (typeof window !== 'undefined') {
+      document.documentElement.classList.remove('dark');
+      localStorage.removeItem('theme');
+    }
   }, []);
 
   // Escuchar cambios en la configuración de administración
@@ -268,7 +272,12 @@ const Index = () => {
         clearSession();
         return;
       }
-      setUser({ key: record.key, name: record.name, email: record.email });
+      setUser({ 
+        key: record.key, 
+        name: record.name, 
+        email: record.email,
+        avatar: (record as any).avatar || 'calm-mind'
+      });
       setEntries(Array.isArray(record.entries) ? [...record.entries] : []);
     } catch (error) {
       console.error('Error en auto-login', error);
@@ -376,7 +385,12 @@ const Index = () => {
         return;
       }
 
-      setUser({ key: record.key, name: record.name, email: record.email });
+      setUser({ 
+        key: record.key, 
+        name: record.name, 
+        email: record.email,
+        avatar: (record as any).avatar || 'calm-mind'
+      });
       setEntries(Array.isArray(record.entries) ? [...record.entries] : []);
       storeSession(record.key, remember);
       setCurrentView('dashboard');
@@ -446,7 +460,12 @@ const Index = () => {
       db.users[record.key] = record;
       setDatabase(db);
 
-      setUser({ key: record.key, name: record.name, email: record.email });
+      setUser({ 
+        key: record.key, 
+        name: record.name, 
+        email: record.email,
+        avatar: (record as any).avatar || 'calm-mind'
+      });
       setEntries([]);
       storeSession(record.key, remember);
       setCurrentView('dashboard');
@@ -479,6 +498,28 @@ const Index = () => {
     });
   };
 
+  const handleUserUpdate = (fields: { avatar: string }) => {
+    if (!user) return;
+    const updatedUser = { ...user, ...fields };
+    setUser(updatedUser);
+    
+    // Guardar en la base de datos local
+    const db = getDatabase();
+    const record = db.users[user.key];
+    if (record) {
+      db.users[user.key] = {
+        ...record,
+        ...fields,
+        updatedAt: new Date().toISOString()
+      } as any;
+      setDatabase(db);
+      toast({
+        title: 'Perfil actualizado',
+        description: 'Tu foto de perfil se ha guardado exitosamente.',
+      });
+    }
+  };
+
   const renderCurrentView = () => {
     switch (currentView) {
       case 'episodes':
@@ -494,7 +535,7 @@ const Index = () => {
       case 'trends':
         return <TrendsView entries={entries} />;
       case 'admin':
-        return <AdminPanel />;
+        return <AdminPanel user={user} onUserUpdate={handleUserUpdate} />;
       default:
         return <Dashboard entries={entries} />;
     }
@@ -509,10 +550,7 @@ const Index = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '2rem 1rem',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%)',
-          backgroundSize: '400% 400%',
-          animation: 'gradientShift 15s ease infinite'
+          padding: '2rem 1rem'
         }}
       >
         <AuthGate
@@ -531,785 +569,23 @@ const Index = () => {
       className="min-h-screen gradient-hero" 
       style={{ 
         minHeight: 'calc(var(--vh, 1vh) * 100)',
-        paddingBottom: 'calc(80px + env(safe-area-inset-bottom))',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%)',
-        backgroundSize: '400% 400%',
-        animation: 'gradientShift 15s ease infinite'
+        paddingBottom: 'calc(80px + env(safe-area-inset-bottom))'
       }}
     >
-      <Header onNewEntry={handleOpenForm} />
+      <Header 
+        onNewEntry={handleOpenForm}
+        user={user}
+        onLogout={handleLogout}
+        currentView={currentView}
+        onViewChange={setCurrentView}
+      />
 
-      <div
-        style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: '1.5rem 1rem 0 1rem'
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '1rem',
-            flexWrap: 'wrap',
-            background: 'rgba(255, 255, 255, 0.15)',
-            color: '#fff',
-            borderRadius: '18px',
-            border: '1px solid rgba(255, 255, 255, 0.3)',
-            backdropFilter: 'blur(16px)',
-            boxShadow: '0 18px 40px rgba(15, 23, 42, 0.2)',
-            padding: '1.25rem 1.5rem'
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.35rem'
-            }}
-          >
-            <span
-              style={{
-                fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                fontSize: '1.125rem',
-                fontWeight: 600
-              }}
-            >
-              Hola, {getFirstName(user.name)}
-            </span>
-            <span
-              style={{
-                fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                fontSize: '0.95rem',
-                color: 'rgba(255, 255, 255, 0.8)'
-              }}
-            >
-              {user.email}
-            </span>
-          </div>
-          <button
-            onClick={handleLogout}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '0.75rem 1.75rem',
-              borderRadius: '14px',
-              border: '1px solid rgba(255, 255, 255, 0.4)',
-              background: 'rgba(15, 23, 42, 0.3)',
-              color: '#fff',
-              fontWeight: 600,
-              fontSize: '0.95rem',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(15, 23, 42, 0.45)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(15, 23, 42, 0.3)';
-            }}
-          >
-            Cerrar sesión
-          </button>
-        </div>
-      </div>
-
-      {/* Hero Section - Optimizada */}
+      {/* Main Content Area - Optimizada para dispositivos móviles y escritorio */}
       <div 
         style={{
-          padding: '4rem 0',
+          padding: '1.5rem 0 6rem 0',
           position: 'relative',
-          minHeight: '60vh',
-          display: 'flex',
-          alignItems: 'center'
-        }}
-      >
-        <div 
-          style={{
-            maxWidth: '1200px',
-            margin: '0 auto',
-            padding: '0 1rem',
-            width: '100%'
-          }}
-        >
-          <div 
-            style={{
-              textAlign: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '2rem'
-            }}
-          >
-            {/* Icono optimizado */}
-            <div 
-              style={{
-                width: '80px',
-                height: '80px',
-                borderRadius: '20px',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontWeight: 700,
-                boxShadow: '0 20px 40px rgba(102, 126, 234, 0.4)',
-                animation: 'float 3s ease-in-out infinite'
-              }}
-            >
-              <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-              </svg>
-            </div>
-            
-            {/* Título optimizado */}
-                 <h1
-                   style={{
-                     fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                     fontWeight: 800,
-                     fontSize: 'clamp(2.5rem, 5vw, 4rem)',
-                     lineHeight: 1.1,
-                     letterSpacing: '-0.02em',
-                     background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 50%, #e0f2fe 100%)',
-                     WebkitBackgroundClip: 'text',
-                     WebkitTextFillColor: 'transparent',
-                     backgroundClip: 'text',
-                     textShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
-                     margin: 0
-                   }}
-                 >
-                   {appSettings.appName}
-                 </h1>
-            
-            {/* Descripción optimizada */}
-            <p 
-              style={{
-                fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                fontSize: 'clamp(1rem, 2.5vw, 1.25rem)',
-                lineHeight: 1.6,
-                color: 'rgba(255, 255, 255, 0.9)',
-                fontWeight: 400,
-                maxWidth: '600px',
-                margin: 0,
-                textShadow: '0 2px 10px rgba(0, 0, 0, 0.2)'
-              }}
-            >
-              {appSettings.appDescription}
-            </p>
-            
-                 {/* Botones optimizados - Responsive */}
-                 <div
-                   style={{
-                     display: 'flex',
-                     justifyContent: 'center',
-                     alignItems: 'center',
-                     marginTop: '2rem',
-                     width: '100%'
-                   }}
-                 >
-              {/* Botón principal */}
-              <button 
-                onClick={handleOpenForm}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '1rem 2.5rem',
-                  fontSize: '1.125rem',
-                  fontWeight: 600,
-                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  borderRadius: '50px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: 'white',
-                  boxShadow: '0 10px 30px rgba(102, 126, 234, 0.4)',
-                  minWidth: '200px',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 15px 40px rgba(102, 126, 234, 0.6)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 10px 30px rgba(102, 126, 234, 0.4)';
-                }}
-              >
-                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ marginRight: '0.75rem' }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Nuevo Episodio
-              </button>
-              
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Section - Solo mostrar en vista inicial */}
-      {currentView === 'dashboard' && (
-        <div 
-          style={{
-            padding: '3rem 0',
-            position: 'relative'
-          }}
-        >
-          <div 
-            style={{
-              maxWidth: '1200px',
-              margin: '0 auto',
-              padding: '0 1rem'
-            }}
-          >
-            <div 
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                gap: '1rem',
-                marginTop: '2rem'
-              }}
-            >
-            {/* Tarjeta 1: Episodios Registrados */}
-            <div 
-              style={{
-                background: 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(20px)',
-                borderRadius: '20px',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                overflow: 'hidden',
-                padding: '2rem',
-                cursor: 'pointer'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-5px)';
-                e.currentTarget.style.boxShadow = '0 30px 60px rgba(0, 0, 0, 0.15)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.1)';
-              }}
-            >
-              <div 
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '1.5rem'
-                }}
-              >
-                <h3 
-                  style={{
-                    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    fontWeight: 700,
-                    fontSize: '1.25rem',
-                    lineHeight: 1.3,
-                    color: '#1e293b',
-                    margin: 0
-                  }}
-                >
-                  Episodios Registrados
-                </h3>
-                <div 
-                  style={{
-                    width: '60px',
-                    height: '60px',
-                    borderRadius: '16px',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontWeight: 700,
-                    boxShadow: '0 10px 25px rgba(102, 126, 234, 0.4)',
-                    fontSize: '1.5rem'
-                  }}
-                >
-                  {entries.length}
-                </div>
-              </div>
-              <p 
-                style={{
-                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  fontSize: '1rem',
-                  lineHeight: 1.6,
-                  color: '#64748b',
-                  fontWeight: 400,
-                  margin: 0
-                }}
-              >
-                Total de episodios de migraña registrados en tu diario personal.
-              </p>
-            </div>
-
-            {/* Tarjeta 2: Estado del Sistema */}
-            <div 
-              style={{
-                background: 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(20px)',
-                borderRadius: '20px',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                overflow: 'hidden',
-                padding: '2rem',
-                cursor: 'pointer'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-5px)';
-                e.currentTarget.style.boxShadow = '0 30px 60px rgba(0, 0, 0, 0.15)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.1)';
-              }}
-            >
-              <div 
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '1.5rem'
-                }}
-              >
-                <h3 
-                  style={{
-                    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    fontWeight: 700,
-                    fontSize: '1.25rem',
-                    lineHeight: 1.3,
-                    color: '#1e293b',
-                    margin: 0
-                  }}
-                >
-                  Estado del Sistema
-                </h3>
-                <div 
-                  style={{
-                    width: '60px',
-                    height: '60px',
-                    borderRadius: '16px',
-                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    boxShadow: '0 10px 25px rgba(16, 185, 129, 0.4)'
-                  }}
-                >
-                  <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-              </div>
-              <p 
-                style={{
-                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  fontSize: '1rem',
-                  lineHeight: 1.6,
-                  color: '#64748b',
-                  fontWeight: 400,
-                  margin: 0
-                }}
-              >
-                Aplicación funcionando correctamente y lista para usar.
-              </p>
-            </div>
-
-            {/* Tarjeta 3: Próximos Pasos */}
-            <div 
-              style={{
-                background: 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(20px)',
-                borderRadius: '20px',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                overflow: 'hidden',
-                padding: '2rem',
-                cursor: 'pointer'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-5px)';
-                e.currentTarget.style.boxShadow = '0 30px 60px rgba(0, 0, 0, 0.15)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.1)';
-              }}
-            >
-              <div 
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '1.5rem'
-                }}
-              >
-                <h3 
-                  style={{
-                    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    fontWeight: 700,
-                    fontSize: '1.25rem',
-                    lineHeight: 1.3,
-                    color: '#1e293b',
-                    margin: 0
-                  }}
-                >
-                  Próximos Pasos
-                </h3>
-                <div 
-                  style={{
-                    width: '60px',
-                    height: '60px',
-                    borderRadius: '16px',
-                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    boxShadow: '0 10px 25px rgba(245, 158, 11, 0.4)'
-                  }}
-                >
-                  <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-              </div>
-              <p 
-                style={{
-                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  fontSize: '1rem',
-                  lineHeight: 1.6,
-                  color: '#64748b',
-                  fontWeight: 400,
-                  margin: 0
-                }}
-              >
-                Comienza registrando tu primer episodio para obtener insights personalizados.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-      )}
-
-      {/* Quick Actions - Solo mostrar en vista inicial */}
-      {currentView === 'dashboard' && (
-        <div 
-          style={{
-            padding: '3rem 0',
-            position: 'relative',
-            background: 'rgba(255, 255, 255, 0.05)',
-            backdropFilter: 'blur(10px)'
-          }}
-        >
-        <div 
-          style={{
-            maxWidth: '1200px',
-            margin: '0 auto',
-            padding: '0 1rem'
-          }}
-        >
-          <h2 
-            style={{
-              fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              fontWeight: 700,
-              fontSize: 'clamp(1.5rem, 4vw, 2.5rem)',
-              lineHeight: 1.2,
-              textAlign: 'center',
-              color: 'rgba(255, 255, 255, 0.9)',
-              marginBottom: '3rem',
-              textShadow: '0 2px 10px rgba(0, 0, 0, 0.2)'
-            }}
-          >
-            Acciones Rápidas
-          </h2>
-          
-          <div 
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-              gap: '1rem',
-              maxWidth: '800px',
-              margin: '0 auto'
-            }}
-          >
-            {/* Dashboard */}
-            <button 
-              onClick={() => setCurrentView('dashboard')}
-              style={{
-                background: currentView === 'dashboard' 
-                  ? 'rgba(255, 255, 255, 0.2)' 
-                  : 'rgba(255, 255, 255, 0.1)',
-                backdropFilter: 'blur(20px)',
-                borderRadius: '20px',
-                border: currentView === 'dashboard' 
-                  ? '2px solid rgba(102, 126, 234, 0.8)' 
-                  : '1px solid rgba(255, 255, 255, 0.2)',
-                padding: '2rem 1.5rem',
-                textAlign: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                transform: currentView === 'dashboard' ? 'scale(1.05)' : 'scale(1)',
-                boxShadow: currentView === 'dashboard' 
-                  ? '0 20px 40px rgba(102, 126, 234, 0.3)' 
-                  : '0 10px 30px rgba(0, 0, 0, 0.1)'
-              }}
-              onMouseEnter={(e) => {
-                if (currentView !== 'dashboard') {
-                  e.currentTarget.style.transform = 'scale(1.05)';
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (currentView !== 'dashboard') {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                }
-              }}
-            >
-              <div 
-                style={{
-                  width: '60px',
-                  height: '60px',
-                  borderRadius: '16px',
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 1rem',
-                  boxShadow: '0 10px 25px rgba(102, 126, 234, 0.4)'
-                }}
-              >
-                <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'white' }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-                </svg>
-              </div>
-                   <span
-                     style={{
-                       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                       fontWeight: 600,
-                       fontSize: '1.125rem',
-                       color: 'white',
-                       display: 'block'
-                     }}
-                   >
-                     Inicio
-                   </span>
-            </button>
-
-            {/* Calendario */}
-            <button 
-              onClick={() => setCurrentView('calendar')}
-              style={{
-                background: currentView === 'calendar' 
-                  ? 'rgba(255, 255, 255, 0.2)' 
-                  : 'rgba(255, 255, 255, 0.1)',
-                backdropFilter: 'blur(20px)',
-                borderRadius: '20px',
-                border: currentView === 'calendar' 
-                  ? '2px solid rgba(240, 147, 251, 0.8)' 
-                  : '1px solid rgba(255, 255, 255, 0.2)',
-                padding: '2rem 1.5rem',
-                textAlign: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                transform: currentView === 'calendar' ? 'scale(1.05)' : 'scale(1)',
-                boxShadow: currentView === 'calendar' 
-                  ? '0 20px 40px rgba(240, 147, 251, 0.3)' 
-                  : '0 10px 30px rgba(0, 0, 0, 0.1)'
-              }}
-              onMouseEnter={(e) => {
-                if (currentView !== 'calendar') {
-                  e.currentTarget.style.transform = 'scale(1.05)';
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (currentView !== 'calendar') {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                }
-              }}
-            >
-              <div 
-                style={{
-                  width: '60px',
-                  height: '60px',
-                  borderRadius: '16px',
-                  background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 1rem',
-                  boxShadow: '0 10px 25px rgba(240, 147, 251, 0.4)'
-                }}
-              >
-                <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'white' }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-                   <span
-                     style={{
-                       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                       fontWeight: 600,
-                       fontSize: '1.125rem',
-                       color: 'white',
-                       display: 'block'
-                     }}
-                   >
-                     Fechas
-                   </span>
-            </button>
-
-            {/* Tendencias */}
-            <button 
-              onClick={() => setCurrentView('trends')}
-              style={{
-                background: currentView === 'trends' 
-                  ? 'rgba(255, 255, 255, 0.2)' 
-                  : 'rgba(255, 255, 255, 0.1)',
-                backdropFilter: 'blur(20px)',
-                borderRadius: '20px',
-                border: currentView === 'trends' 
-                  ? '2px solid rgba(79, 172, 254, 0.8)' 
-                  : '1px solid rgba(255, 255, 255, 0.2)',
-                padding: '2rem 1.5rem',
-                textAlign: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                transform: currentView === 'trends' ? 'scale(1.05)' : 'scale(1)',
-                boxShadow: currentView === 'trends' 
-                  ? '0 20px 40px rgba(79, 172, 254, 0.3)' 
-                  : '0 10px 30px rgba(0, 0, 0, 0.1)'
-              }}
-              onMouseEnter={(e) => {
-                if (currentView !== 'trends') {
-                  e.currentTarget.style.transform = 'scale(1.05)';
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (currentView !== 'trends') {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                }
-              }}
-            >
-              <div 
-                style={{
-                  width: '60px',
-                  height: '60px',
-                  borderRadius: '16px',
-                  background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 1rem',
-                  boxShadow: '0 10px 25px rgba(79, 172, 254, 0.4)'
-                }}
-              >
-                <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'white' }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-                   <span
-                     style={{
-                       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                       fontWeight: 600,
-                       fontSize: '1.125rem',
-                       color: 'white',
-                       display: 'block'
-                     }}
-                   >
-                     Gráficos
-                   </span>
-            </button>
-
-            {/* Episodios */}
-            <button 
-              onClick={() => setCurrentView('episodes')}
-              style={{
-                background: currentView === 'episodes' 
-                  ? 'rgba(255, 255, 255, 0.2)' 
-                  : 'rgba(255, 255, 255, 0.1)',
-                backdropFilter: 'blur(20px)',
-                borderRadius: '20px',
-                border: currentView === 'episodes' 
-                  ? '2px solid rgba(245, 158, 11, 0.8)' 
-                  : '1px solid rgba(255, 255, 255, 0.2)',
-                padding: '2rem 1.5rem',
-                textAlign: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                transform: currentView === 'episodes' ? 'scale(1.05)' : 'scale(1)',
-                boxShadow: currentView === 'episodes' 
-                  ? '0 20px 40px rgba(245, 158, 11, 0.3)' 
-                  : '0 10px 30px rgba(0, 0, 0, 0.1)'
-              }}
-              onMouseEnter={(e) => {
-                if (currentView !== 'episodes') {
-                  e.currentTarget.style.transform = 'scale(1.05)';
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (currentView !== 'episodes') {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                }
-              }}
-            >
-              <div 
-                style={{
-                  width: '60px',
-                  height: '60px',
-                  borderRadius: '16px',
-                  background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 1rem',
-                  boxShadow: '0 10px 25px rgba(245, 158, 11, 0.4)'
-                }}
-              >
-                <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'white' }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-              </div>
-                   <span
-                     style={{
-                       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                       fontWeight: 600,
-                       fontSize: '1.125rem',
-                       color: 'white',
-                       display: 'block'
-                     }}
-                   >
-                     Lista
-                   </span>
-            </button>
-          </div>
-        </div>
-      </div>
-      )}
-
-      {/* Main Content Area - Optimizada */}
-      <div 
-        style={{
-          padding: currentView === 'dashboard' ? '3rem 0 6rem 0' : '1rem 0 6rem 0',
-          position: 'relative',
-          minHeight: currentView === 'dashboard' ? '50vh' : '70vh'
+          minHeight: '70vh'
         }}
       >
         <div 
@@ -1325,18 +601,20 @@ const Index = () => {
               style={{
                 textAlign: 'center',
                 marginBottom: '2rem',
-                padding: '2rem 0'
+                padding: '1rem 0 1.5rem 0'
               }}
             >
               <h2 
                 style={{
-                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontFamily: "'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   fontWeight: 700,
-                  fontSize: 'clamp(1.5rem, 4vw, 2.5rem)',
+                  fontSize: 'clamp(1.5rem, 4vw, 2.25rem)',
                   lineHeight: 1.2,
-                  color: 'rgba(255, 255, 255, 0.9)',
-                  margin: 0,
-                  textShadow: '0 2px 10px rgba(0, 0, 0, 0.2)'
+                  background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  margin: 0
                 }}
               >
                 {currentView === 'episodes' && 'Lista de Episodios'}
@@ -1346,11 +624,10 @@ const Index = () => {
               </h2>
               <p 
                 style={{
-                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  fontSize: '1rem',
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  margin: '0.5rem 0 0 0',
-                  textShadow: '0 1px 5px rgba(0, 0, 0, 0.2)'
+                  fontFamily: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontSize: '0.925rem',
+                  color: '#64748b',
+                  margin: '0.35rem 0 0 0'
                 }}
               >
                 {currentView === 'episodes' && 'Gestiona y revisa todos tus episodios de migraña'}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { HeadacheEntry } from '@/types/headache';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Clock, Activity, Pill, FileText, X, Zap, Save } from 'lucide-react';
+import { Calendar, Clock, Activity, Pill, FileText, X, Zap, Save, Moon } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ interface SimpleHeadacheFormProps {
 
 const SimpleHeadacheForm = ({ onSave, onCancel }: SimpleHeadacheFormProps) => {
   const [isExpress, setIsExpress] = useState(false);
+  const isDark = false; // Exclusivo modo claro
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -24,6 +25,8 @@ const SimpleHeadacheForm = ({ onSave, onCancel }: SimpleHeadacheFormProps) => {
     intensity: [5],
     medications: [] as string[],
     symptoms: [] as string[],
+    triggers: [] as string[],
+    sleepHours: 7,
     notes: '',
   });
 
@@ -35,6 +38,19 @@ const SimpleHeadacheForm = ({ onSave, onCancel }: SimpleHeadacheFormProps) => {
     'Dolor pulsante', 'Dolor constante', 'Sensibilidad a la luz', 
     'Sensibilidad al sonido', 'Náuseas', 'Vómitos', 'Mareos'
   ];
+
+  const triggerOptions = [
+    'Estrés', 'Falta de sueño', 'Alcohol', 'Cafeína', 'Brillo/Luces', 'Saltarse comidas', 'Cambio de clima'
+  ];
+
+  const toggleTrigger = (trigger: string) => {
+    setFormData(prev => ({
+      ...prev,
+      triggers: prev.triggers.includes(trigger)
+        ? prev.triggers.filter(t => t !== trigger)
+        : [...prev.triggers, trigger]
+    }));
+  };
 
   const handleExpressSubmit = () => {
     const entry: HeadacheEntry = {
@@ -66,11 +82,12 @@ const SimpleHeadacheForm = ({ onSave, onCancel }: SimpleHeadacheFormProps) => {
       intensity: formData.intensity[0],
       duration: 0,
       medications: formData.medications,
-      triggers: [],
+      triggers: formData.triggers,
       symptoms: formData.symptoms,
       relievedBy: [],
       mood: '',
       stressLevel: 3,
+      sleepHours: formData.sleepHours,
       notes: formData.notes,
     };
     onSave(entry);
@@ -127,12 +144,13 @@ const SimpleHeadacheForm = ({ onSave, onCancel }: SimpleHeadacheFormProps) => {
           style={{
             maxWidth: '500px',
             width: '100%',
-            background: 'rgba(255, 255, 255, 0.95)',
+            background: isDark ? 'rgba(30, 41, 59, 0.92)' : 'rgba(255, 255, 255, 0.95)',
             backdropFilter: 'blur(20px)',
             borderRadius: '24px',
-            border: '1px solid rgba(255, 255, 255, 0.3)',
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(255, 255, 255, 0.3)',
             boxShadow: '0 25px 50px rgba(0, 0, 0, 0.25)',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            color: isDark ? '#f8fafc' : '#1e293b'
           }}
         >
           <div 
@@ -174,7 +192,7 @@ const SimpleHeadacheForm = ({ onSave, onCancel }: SimpleHeadacheFormProps) => {
                     fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontSize: '2rem',
                     fontWeight: 700,
-                    color: '#1e293b',
+                    color: isDark ? '#f8fafc' : '#1e293b',
                     margin: 0,
                     lineHeight: 1.2
                   }}
@@ -313,7 +331,7 @@ const SimpleHeadacheForm = ({ onSave, onCancel }: SimpleHeadacheFormProps) => {
                     fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontSize: '1.125rem',
                     fontWeight: 600,
-                    color: '#1e293b',
+                    color: isDark ? '#f8fafc' : '#1e293b',
                     textAlign: 'center',
                     display: 'block',
                     marginBottom: '1.5rem'
@@ -338,7 +356,7 @@ const SimpleHeadacheForm = ({ onSave, onCancel }: SimpleHeadacheFormProps) => {
                         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         fontSize: '3rem',
                         fontWeight: 700,
-                        color: '#1e293b',
+                        color: isDark ? '#f8fafc' : '#1e293b',
                         margin: 0,
                         lineHeight: 1
                       }}
@@ -506,14 +524,15 @@ const SimpleHeadacheForm = ({ onSave, onCancel }: SimpleHeadacheFormProps) => {
           maxWidth: '800px',
           width: '100%',
           maxHeight: '95vh',
-          background: 'rgba(255, 255, 255, 0.95)',
+          background: isDark ? 'rgba(30, 41, 59, 0.92)' : 'rgba(255, 255, 255, 0.95)',
           backdropFilter: 'blur(20px)',
           borderRadius: '24px',
-          border: '1px solid rgba(255, 255, 255, 0.3)',
+          border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(255, 255, 255, 0.3)',
           boxShadow: '0 25px 50px rgba(0, 0, 0, 0.25)',
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          color: isDark ? '#f8fafc' : '#1e293b'
         }}
       >
         {/* Header - Optimizado */}
@@ -555,7 +574,7 @@ const SimpleHeadacheForm = ({ onSave, onCancel }: SimpleHeadacheFormProps) => {
                   fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   fontSize: '1.5rem',
                   fontWeight: 700,
-                  color: '#1e293b',
+                  color: isDark ? '#f8fafc' : '#1e293b',
                   margin: 0,
                   lineHeight: 1.2
                 }}
@@ -724,10 +743,10 @@ const SimpleHeadacheForm = ({ onSave, onCancel }: SimpleHeadacheFormProps) => {
             {/* Intensidad - Optimizado */}
             <div 
               style={{
-                background: 'rgba(255, 255, 255, 0.95)',
+                background: isDark ? 'rgba(15, 23, 42, 0.45)' : 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(20px)',
                 borderRadius: '20px',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
+                border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(255, 255, 255, 0.3)',
                 boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
                 padding: '1.5rem',
                 marginBottom: '1.5rem'
@@ -738,7 +757,7 @@ const SimpleHeadacheForm = ({ onSave, onCancel }: SimpleHeadacheFormProps) => {
                   fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   fontSize: '1.125rem',
                   fontWeight: 600,
-                  color: '#1e293b',
+                  color: isDark ? '#f8fafc' : '#1e293b',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
@@ -806,10 +825,10 @@ const SimpleHeadacheForm = ({ onSave, onCancel }: SimpleHeadacheFormProps) => {
             {/* Medicamentos - Optimizado */}
             <div 
               style={{
-                background: 'rgba(255, 255, 255, 0.95)',
+                background: isDark ? 'rgba(15, 23, 42, 0.45)' : 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(20px)',
                 borderRadius: '20px',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
+                border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(255, 255, 255, 0.3)',
                 boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
                 padding: '1.5rem',
                 marginBottom: '1.5rem'
@@ -828,7 +847,7 @@ const SimpleHeadacheForm = ({ onSave, onCancel }: SimpleHeadacheFormProps) => {
                     fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontSize: '1.125rem',
                     fontWeight: 600,
-                    color: '#1e293b',
+                    color: isDark ? '#f8fafc' : '#1e293b',
                     display: 'flex',
                     alignItems: 'center',
                     margin: 0
@@ -952,10 +971,10 @@ const SimpleHeadacheForm = ({ onSave, onCancel }: SimpleHeadacheFormProps) => {
             {/* Síntomas - Optimizado */}
             <div 
               style={{
-                background: 'rgba(255, 255, 255, 0.95)',
+                background: isDark ? 'rgba(15, 23, 42, 0.45)' : 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(20px)',
                 borderRadius: '20px',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
+                border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(255, 255, 255, 0.3)',
                 boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
                 padding: '1.5rem',
                 marginBottom: '1.5rem'
@@ -974,7 +993,7 @@ const SimpleHeadacheForm = ({ onSave, onCancel }: SimpleHeadacheFormProps) => {
                     fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     fontSize: '1.125rem',
                     fontWeight: 600,
-                    color: '#1e293b',
+                    color: isDark ? '#f8fafc' : '#1e293b',
                     display: 'flex',
                     alignItems: 'center',
                     margin: 0
@@ -1089,6 +1108,153 @@ const SimpleHeadacheForm = ({ onSave, onCancel }: SimpleHeadacheFormProps) => {
                           }}
                         />
                       )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Horas de Sueño */}
+            <div 
+              style={{
+                background: isDark ? 'rgba(15, 23, 42, 0.45)' : 'rgba(255, 255, 255, 0.95)',
+                backdropFilter: 'blur(20px)',
+                borderRadius: '20px',
+                border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(255, 255, 255, 0.3)',
+                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
+                padding: '1.5rem',
+                marginBottom: '1.5rem'
+              }}
+            >
+              <h3 
+                style={{
+                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontSize: '1.125rem',
+                  fontWeight: 600,
+                  color: isDark ? '#f8fafc' : '#1e293b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  margin: 0,
+                  marginBottom: '1rem'
+                }}
+              >
+                <Moon className="w-5 h-5" style={{ color: '#6366f1' }} />
+                Horas de sueño la noche anterior
+              </h3>
+              <div 
+                style={{
+                  textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1rem'
+                }}
+              >
+                <div 
+                  style={{
+                    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    fontSize: '3rem',
+                    fontWeight: 800,
+                    color: isDark ? '#60a5fa' : '#3b82f6',
+                    lineHeight: 1
+                  }}
+                >
+                  {formData.sleepHours} hrs
+                </div>
+                <div style={{ padding: '0 1rem' }}>
+                  <Slider
+                    value={[formData.sleepHours]}
+                    onValueChange={(value) => setFormData({ ...formData, sleepHours: value[0] })}
+                    max={12}
+                    min={3}
+                    step={1}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Desencadenantes */}
+            <div 
+              style={{
+                background: isDark ? 'rgba(15, 23, 42, 0.45)' : 'rgba(255, 255, 255, 0.95)',
+                backdropFilter: 'blur(20px)',
+                borderRadius: '20px',
+                border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(255, 255, 255, 0.3)',
+                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
+                padding: '1.5rem',
+                marginBottom: '1.5rem'
+              }}
+            >
+              <h3 
+                style={{
+                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  fontSize: '1.125rem',
+                  fontWeight: 600,
+                  color: isDark ? '#f8fafc' : '#1e293b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  margin: 0,
+                  marginBottom: '1rem'
+                }}
+              >
+                <Zap className="w-5 h-5" style={{ color: '#f59e0b' }} />
+                Factores desencadenantes
+              </h3>
+              <div 
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                  gap: '0.75rem'
+                }}
+              >
+                {triggerOptions.map(trigger => {
+                  const isSelected = formData.triggers.includes(trigger);
+                  return (
+                    <div 
+                      key={trigger}
+                      onClick={() => toggleTrigger(trigger)}
+                      style={{
+                        padding: '0.75rem',
+                        borderRadius: '12px',
+                        background: isSelected 
+                          ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' 
+                          : isDark ? 'rgba(15, 23, 42, 0.4)' : 'rgba(248, 250, 252, 0.8)',
+                        color: isSelected ? 'white' : isDark ? '#cbd5e1' : '#475569',
+                        border: isSelected 
+                          ? 'none' 
+                          : isDark ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid #e2e8f0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        boxShadow: isSelected ? '0 4px 12px rgba(99, 102, 241, 0.2)' : 'none'
+                      }}
+                    >
+                      <div 
+                        style={{
+                          width: '16px',
+                          height: '16px',
+                          borderRadius: '4px',
+                          border: isSelected ? 'none' : '2px solid rgba(99, 102, 241, 0.4)',
+                          background: isSelected ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}
+                      >
+                        {isSelected && (
+                          <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'white' }}>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                      <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>
+                        {trigger}
+                      </span>
                     </div>
                   );
                 })}

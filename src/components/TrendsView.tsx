@@ -9,7 +9,8 @@ interface TrendsViewProps {
 const TrendsView = ({ entries }: TrendsViewProps) => {
   // Monthly intensity data
   const monthlyData = entries.reduce((acc, entry) => {
-    const date = new Date(entry.date);
+    const [year, month, day] = entry.date.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
     const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
     
     if (!acc[monthKey]) {
@@ -151,7 +152,7 @@ const TrendsView = ({ entries }: TrendsViewProps) => {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={triggerChartData} layout="horizontal">
+              <BarChart data={triggerChartData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#FECACA" />
                 <XAxis type="number" stroke="#9CA3AF" fontSize={12} />
                 <YAxis 

@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Settings, Save, LogOut } from 'lucide-react';
+import { Settings, Save, LogOut, User, Check, ShieldCheck, Mail, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import AdminAuth from './AdminAuth';
 import ChangePasswordModal from './ChangePasswordModal';
@@ -12,6 +11,7 @@ import GeneralTab from './admin/GeneralTab';
 import AppearanceTab from './admin/AppearanceTab';
 import DataTab from './admin/DataTab';
 import SecurityTab from './admin/SecurityTab';
+import UserAvatar, { AVATAR_OPTIONS } from './UserAvatar';
 
 interface AdminSettings {
   appName: string;
@@ -25,8 +25,16 @@ interface AdminSettings {
   exportFormat: string;
 }
 
-const AdminPanel = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+interface AdminPanelProps {
+  user?: { key: string; name: string; email: string; avatar?: string } | null;
+  onUserUpdate?: (fields: { avatar: string }) => void;
+}
+
+const AdminPanel = ({ user, onUserUpdate }: AdminPanelProps) => {
+  // Sección activa: 'profile' (Mi Perfil) o 'system' (Sistema)
+  const [activeSection, setActiveSection] = useState<'profile' | 'system'>('profile');
+  
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [settings, setSettings] = useState<AdminSettings>({
     appName: 'MigraCare',
@@ -42,7 +50,7 @@ const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'medications' | 'data' | 'security'>('general');
   const { toast } = useToast();
 
-  // Verificación de autenticación
+  // Verificación de autenticación de administrador
   useEffect(() => {
     const authStatus = localStorage.getItem('admin-authenticated');
     const sessionTimestamp = localStorage.getItem('admin-session-timestamp');
@@ -52,21 +60,20 @@ const AdminPanel = () => {
       const MAX_SESSION_TIME = 24 * 60 * 60 * 1000; // 24 horas
       
       if (sessionAge < MAX_SESSION_TIME) {
-        setIsAuthenticated(true);
-        
+        setIsAdminAuthenticated(true);
         const passwordChanged = localStorage.getItem('admin-password-changed');
         if (!passwordChanged) {
           setShowChangePassword(true);
         }
       } else {
-        handleLogout();
+        handleAdminLogout();
       }
     }
   }, []);
 
-  // Cargar configuración
+  // Cargar configuración de administrador si está autenticado
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAdminAuthenticated) {
       const savedSettings = localStorage.getItem('admin-settings');
       if (savedSettings) {
         try {
@@ -77,7 +84,7 @@ const AdminPanel = () => {
         }
       }
     }
-  }, [isAuthenticated]);
+  }, [isAdminAuthenticated]);
 
   const handleSave = () => {
     try {
@@ -99,13 +106,13 @@ const AdminPanel = () => {
     }
   };
 
-  const handleLogout = () => {
+  const handleAdminLogout = () => {
     localStorage.removeItem('admin-authenticated');
     localStorage.removeItem('admin-session-timestamp');
-    setIsAuthenticated(false);
+    setIsAdminAuthenticated(false);
     toast({
-      title: "Sesión cerrada",
-      description: "Has cerrado sesión exitosamente."
+      title: "Sesión de administración cerrada",
+      description: "Has salido de la configuración del sistema."
     });
   };
 
@@ -126,9 +133,12 @@ const AdminPanel = () => {
     }
   };
 
-  if (!isAuthenticated) {
-    return <AdminAuth onAuthenticated={() => setIsAuthenticated(true)} />;
-  }
+  // Manejar cambio de avatar
+  const handleSelectAvatar = (avatarId: string) => {
+    if (onUserUpdate) {
+      onUserUpdate({ avatar: avatarId });
+    }
+  };
 
   return (
     <>
@@ -138,8 +148,8 @@ const AdminPanel = () => {
       
       <div 
         style={{
-          padding: '2rem 1rem',
-          maxWidth: '1200px',
+          padding: '1.5rem 0 3rem 0',
+          maxWidth: '1000px',
           margin: '0 auto'
         }}
       >
@@ -149,164 +159,236 @@ const AdminPanel = () => {
             backdropFilter: 'blur(20px)',
             borderRadius: '24px',
             border: '1px solid rgba(255, 255, 255, 0.3)',
-            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.15)',
+            boxShadow: '0 20px 45px rgba(15, 23, 42, 0.08)',
             overflow: 'hidden'
           }}
         >
-          {/* Header - Optimizado */}
+          {/* HEADER SECTOR: USER vs SYSTEM SELECTION */}
           <div 
             style={{
-              padding: '2rem',
+              padding: '1.5rem 2rem',
               borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
-              background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)'
+              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, rgba(236, 72, 153, 0.03) 100%)'
             }}
           >
-            <div 
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1.5rem'
-              }}
-              className="sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div 
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem'
-                }}
-              >
-                <div 
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h1 
                   style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '16px',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 8px 20px rgba(102, 126, 234, 0.3)'
+                    fontFamily: "'Outfit', sans-serif",
+                    fontSize: '1.6rem',
+                    fontWeight: 800,
+                    color: '#0f172a',
+                    margin: 0,
+                    lineHeight: 1.2
                   }}
                 >
-                  <Settings className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h1 
-                    style={{
-                      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      fontSize: '1.75rem',
-                      fontWeight: 700,
-                      color: '#1e293b',
-                      margin: 0,
-                      lineHeight: 1.2
-                    }}
-                  >
-                    Panel de Administración
-                  </h1>
-                  <p 
-                    style={{
-                      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      fontSize: '0.875rem',
-                      color: '#64748b',
-                      margin: 0,
-                      marginTop: '0.25rem'
-                    }}
-                  >
-                    Configura tu aplicación personalizada
-                  </p>
-                </div>
+                  Configuración y Ajustes
+                </h1>
+                <p 
+                  style={{
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    fontSize: '0.85rem',
+                    color: '#64748b',
+                    margin: '0.2rem 0 0 0'
+                  }}
+                >
+                  Configura tu perfil personal o personaliza la aplicación
+                </p>
               </div>
-              
-              <button
-                onClick={handleLogout}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '0.75rem 1.5rem',
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  borderRadius: '12px',
-                  border: '2px solid #ef4444',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: 'rgba(255, 255, 255, 0.8)',
-                  color: '#ef4444',
-                  width: '100%',
-                  maxWidth: '200px'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#ef4444';
-                  e.currentTarget.style.color = 'white';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.8)';
-                  e.currentTarget.style.color = '#ef4444';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Cerrar Sesión
-              </button>
-            </div>
-            
-            <div style={{ marginTop: '1.5rem' }}>
-              <AdminTabs activeTab={activeTab} onTabChange={setActiveTab} />
+
+              {/* UNIFIED SWITCH CONTROLLER */}
+              <div className="flex bg-slate-100 p-1 rounded-xl w-fit border border-slate-200/50">
+                <button
+                  onClick={() => setActiveSection('profile')}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all duration-300 ${
+                    activeSection === 'profile'
+                      ? 'bg-white text-indigo-600 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                  style={{ border: 'none', cursor: 'pointer' }}
+                >
+                  <User className="w-3.5 h-3.5" />
+                  <span>Mi Perfil</span>
+                </button>
+                
+                <button
+                  onClick={() => setActiveSection('system')}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all duration-300 ${
+                    activeSection === 'system'
+                      ? 'bg-white text-indigo-600 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                  style={{ border: 'none', cursor: 'pointer' }}
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Sistema</span>
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Content - Optimizado */}
+          {/* MAIN CONTAINER CONTENT */}
           <div 
             style={{
-              padding: '2rem',
-              background: 'rgba(248, 250, 252, 0.5)'
+              padding: '1.75rem 2rem',
+              background: 'rgba(248, 250, 252, 0.4)'
             }}
           >
-            {renderTabContent()}
+            {activeSection === 'profile' ? (
+              /* ========================================
+                 PROFILE SUBSECTION (PUBLIC & NO AUTHENTICATION NEEDED)
+                 ======================================== */
+              <div className="space-y-6">
+                
+                {/* User Info Overview card */}
+                {user && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-white/80 p-5 rounded-2xl border border-slate-200/50 shadow-sm items-center">
+                    
+                    {/* Column 1: Current profile pic */}
+                    <div className="flex flex-col items-center gap-2.5 md:border-r md:border-slate-100 md:pr-4">
+                      <UserAvatar avatarId={user.avatar} size={76} />
+                      <div className="text-center">
+                        <h2 className="text-base font-bold text-slate-800" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                          {user.name}
+                        </h2>
+                        <span className="text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full font-semibold">
+                          Paciente
+                        </span>
+                      </div>
+                    </div>
 
-            {activeTab !== 'medications' && activeTab !== 'security' && (
-              <div 
-                style={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  paddingTop: '2rem',
-                  borderTop: '1px solid rgba(226, 232, 240, 0.5)',
-                  marginTop: '2rem'
-                }}
-              >
-                <button
-                  onClick={handleSave}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '0.875rem 2rem',
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    borderRadius: '12px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    color: 'white',
-                    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
-                    minWidth: '200px'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 8px 20px rgba(102, 126, 234, 0.4)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.3)';
-                  }}
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  Guardar Configuración
-                </button>
+                    {/* Column 2: Account details */}
+                    <div className="md:col-span-2 space-y-3.5 px-1">
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                        Detalles de Cuenta
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
+                        <div className="flex items-center gap-2 text-slate-600">
+                          <Mail className="w-4 h-4 text-slate-400 shrink-0" />
+                          <span className="truncate" title={user.email}>{user.email}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-slate-600">
+                          <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
+                          <span>Paciente Activo</span>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                )}
+
+                {/* Avatar Selection Card */}
+                <Card className="glass-card-dark border border-slate-200/60 shadow-lg">
+                  <CardHeader className="pb-3 border-b border-slate-50">
+                    <CardTitle className="text-sm sm:text-base font-bold text-slate-800">
+                      Selecciona tu Foto de Perfil (Avatar)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-5">
+                    <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+                      Elige uno de nuestros hermosos iconos de meditación y salud con gradientes reconfortantes. Se actualizará en la barra superior al instante.
+                    </p>
+
+                    {/* Interactive selection grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+                      {AVATAR_OPTIONS.map((option) => {
+                        const isSelected = user?.avatar === option.id || (!user?.avatar && option.id === 'calm-mind');
+                        return (
+                          <button
+                            key={option.id}
+                            onClick={() => handleSelectAvatar(option.id)}
+                            className="flex flex-col items-center justify-center p-3.5 bg-white border rounded-2xl transition-all duration-300 select-none relative group hover:-translate-y-0.5 hover:shadow-md"
+                            style={{
+                              borderColor: isSelected ? '#6366f1' : '#e2e8f0',
+                              borderWidth: isSelected ? '2px' : '1px',
+                              boxShadow: isSelected ? '0 10px 20px rgba(99, 102, 241, 0.12)' : 'none',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <UserAvatar avatarId={option.id} size={48} style={{ border: 'none', boxShadow: 'none' }} />
+                            
+                            <span 
+                              className="text-[10px] sm:text-xs font-bold text-slate-700 text-center mt-2.5 truncate max-w-full"
+                              style={{ color: isSelected ? '#4f46e5' : '#475569' }}
+                            >
+                              {option.name}
+                            </span>
+
+                            {/* Active selection dot checkmark */}
+                            {isSelected && (
+                              <div className="absolute top-1.5 right-1.5 bg-indigo-600 text-white w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white shadow-sm p-0.5">
+                                <Check className="w-2.5 h-2.5 stroke-[3]" />
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+
+              </div>
+            ) : (
+              /* ========================================
+                 SYSTEM SUBSECTION (SECURE & REQUIRES ADMIN PASSWORD)
+                 ======================================== */
+              <div>
+                {!isAdminAuthenticated ? (
+                  /* Authentication Gate if not logged in as Admin yet */
+                  <div className="bg-white/80 p-6 rounded-2xl border border-slate-200/50 shadow-sm max-w-md mx-auto my-4">
+                    <h2 className="text-center text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">
+                      Acceso Requerido
+                    </h2>
+                    <p className="text-center text-xs text-slate-600 mb-6">
+                      Para modificar la configuración visual, colores o base de datos de MigraCare, por favor ingresa la contraseña de administrador.
+                    </p>
+                    <AdminAuth onAuthenticated={() => setIsAdminAuthenticated(true)} />
+                  </div>
+                ) : (
+                  /* Authenticated admin tab settings panel */
+                  <div className="space-y-6">
+                    <div className="flex justify-between items-center bg-indigo-50/50 px-4 py-2.5 rounded-xl border border-indigo-100/50">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-700">
+                        <ShieldCheck className="w-4 h-4 text-indigo-500" />
+                        <span>Autenticado como Administrador</span>
+                      </div>
+                      <button
+                        onClick={handleAdminLogout}
+                        className="text-[10px] text-red-500 hover:text-red-700 font-bold bg-white px-2 py-1 rounded border border-red-200/80 transition-all cursor-pointer"
+                        style={{ border: '1px solid #fecaca' }}
+                      >
+                        Cerrar Admin
+                      </button>
+                    </div>
+
+                    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                      <AdminTabs activeTab={activeTab} onTabChange={setActiveTab} />
+                      
+                      <div className="mt-6 pt-6 border-t border-slate-100">
+                        {renderTabContent()}
+                      </div>
+                    </div>
+
+                    {activeTab !== 'medications' && activeTab !== 'security' && (
+                      <div className="flex justify-end pt-2">
+                        <button
+                          onClick={handleSave}
+                          className="btn-beautiful flex items-center gap-1.5"
+                          style={{
+                            padding: '0.75rem 2rem',
+                            fontSize: '0.85rem',
+                            borderRadius: '12px',
+                            boxShadow: '0 8px 20px rgba(99, 102, 241, 0.25)'
+                          }}
+                        >
+                          <Save className="w-4 h-4" />
+                          <span>Guardar Configuración</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -1,12 +1,16 @@
 
 import { useState, useEffect } from 'react';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, BrainCircuit } from 'lucide-react';
 import EpisodeCountCard from './dashboard/EpisodeCountCard';
 import AverageIntensityCard from './dashboard/AverageIntensityCard';
 import TopMedicationCard from './dashboard/TopMedicationCard';
 import RecentEpisodesList from './dashboard/RecentEpisodesList';
 import TopDayCard from './dashboard/TopDayCard';
 import QuoteSection from './dashboard/QuoteSection';
+import SleepPatternsList from './dashboard/SleepPatternsList';
+import WeeklyPatternsList from './dashboard/WeeklyPatternsList';
+import TopMedicationsList from './dashboard/TopMedicationsList';
+import TopTriggersList from './dashboard/TopTriggersList';
 import { HeadacheEntry } from '@/types/headache';
 
 interface DashboardProps {
@@ -79,6 +83,32 @@ const Dashboard = ({ entries }: DashboardProps) => {
     return 'from-purple-700 to-fuchsia-700';
   };
 
+  const topMedications = Object.entries(
+    entries
+      .flatMap(entry => entry.medications || [])
+      .reduce((acc, med) => {
+        if (med && med !== 'Ninguno') {
+          acc[med] = (acc[med] || 0) + 1;
+        }
+        return acc;
+      }, {} as Record<string, number>)
+  )
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3);
+
+  const topTriggers = Object.entries(
+    entries
+      .flatMap(entry => entry.triggers || [])
+      .reduce((acc, trigger) => {
+        if (trigger) {
+          acc[trigger] = (acc[trigger] || 0) + 1;
+        }
+        return acc;
+      }, {} as Record<string, number>)
+  )
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3);
+
   return (
     <div 
       style={{
@@ -100,7 +130,7 @@ const Dashboard = ({ entries }: DashboardProps) => {
       >
         <h2 
           style={{
-            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily: "'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontSize: 'clamp(1.875rem, 4vw, 2.5rem)',
             fontWeight: 700,
             background: 'linear-gradient(135deg, #1e293b 0%, #475569 100%)',
@@ -115,7 +145,7 @@ const Dashboard = ({ entries }: DashboardProps) => {
         </h2>
         <p 
           style={{
-            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            fontFamily: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontSize: '1.125rem',
             color: '#64748b',
             maxWidth: '600px',
@@ -183,6 +213,46 @@ const Dashboard = ({ entries }: DashboardProps) => {
         }}
       >
         <RecentEpisodesList entries={recentEntries} getIntensityGradient={getIntensityGradient} />
+      </div>
+
+      {/* Clinical Insights Section */}
+      <div 
+        style={{
+          animation: 'fadeIn 0.6s ease-out 0.5s both',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1.5rem',
+          marginTop: '1rem'
+        }}
+      >
+        <div 
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            borderBottom: '1px solid rgba(226, 232, 240, 0.4)',
+            paddingBottom: '0.75rem'
+          }}
+        >
+          <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-950/60 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+            <BrainCircuit className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100" style={{ fontFamily: "'Outfit', sans-serif", margin: 0 }}>
+              Análisis Clínico de Patrones
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400" style={{ margin: 0, marginTop: '0.15rem' }}>
+              Hábitos de descanso, actividad semanal, medicamentos recurrentes y factores desencadenantes.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <SleepPatternsList entries={entries} />
+          <WeeklyPatternsList entries={entries} />
+          <TopMedicationsList topMedications={topMedications} />
+          <TopTriggersList topTriggers={topTriggers} />
+        </div>
       </div>
     </div>
   );
