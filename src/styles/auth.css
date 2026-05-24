@@ -469,24 +469,19 @@
   }
   
   .auth-mobile-logo {
-    width: 60px;
-    height: 60px;
-    border-radius: 16px;
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     box-shadow: 0 10px 25px rgba(99, 102, 241, 0.25);
-  }
-  
-  .auth-mobile-logo img {
-    width: 44px;
-    height: 44px;
-    object-fit: contain;
+    border: 2px solid rgba(255, 255, 255, 0.8);
     transition: transform 0.3s ease;
   }
   
-  .auth-mobile-logo img:hover {
+  .auth-mobile-logo:hover {
     transform: scale(1.05);
   }
 

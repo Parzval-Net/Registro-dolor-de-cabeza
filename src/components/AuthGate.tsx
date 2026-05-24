@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { Mail, Lock, User, Eye, EyeOff, Heart } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Heart, Brain } from 'lucide-react';
 
 export type AuthMode = 'login' | 'register' | 'forgot-password' | 'reset-password';
 
@@ -107,7 +107,7 @@ const AuthGate = ({
           {/* Cabezal Móvil (Solo visible en móviles < 768px) */}
           <div className="auth-mobile-header">
             <div className="auth-mobile-logo">
-              <img src="./migraine_care_vector.svg" alt="MigraCare Logo" />
+              <Brain className="w-8 h-8 text-white stroke-[2.2]" />
             </div>
             <h2>MigraCare</h2>
           </div>
