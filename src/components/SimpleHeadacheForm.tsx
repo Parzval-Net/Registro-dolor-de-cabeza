@@ -54,13 +54,11 @@ export default function SimpleHeadacheForm({ onSave, onCancel, initialDate }: Si
 
   const toggleMedication = (med: string) => {
     setFormData(prev => {
-      // Si selecciona "Ninguno", desmarcar todos los demás
       if (med === 'Ninguno') {
         return prev.medications.includes('Ninguno')
           ? { ...prev, medications: [] }
           : { ...prev, medications: ['Ninguno'] };
       }
-      // Si selecciona cualquier otro, remover "Ninguno" e intercalar
       const filtered = prev.medications.filter(m => m !== 'Ninguno');
       return {
         ...prev,
@@ -116,14 +114,13 @@ export default function SimpleHeadacheForm({ onSave, onCancel, initialDate }: Si
       symptoms: formData.symptoms,
       relievedBy: [],
       mood: '',
-      stressLevel: 3, // Simplificado a 3
+      stressLevel: 3,
       sleepHours: isExpress ? undefined : formData.sleepHours,
       notes: isExpress ? 'Registro rápido' : formData.notes,
     };
 
     onSave(entry);
 
-    // Haptic feedback
     if ('vibrate' in navigator) {
       navigator.vibrate(100);
     }
@@ -132,11 +129,19 @@ export default function SimpleHeadacheForm({ onSave, onCancel, initialDate }: Si
   const intInfo = getIntensityInfo(formData.intensity);
 
   return (
-    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-      <div className="bg-white/95 dark:bg-slate-900/95 border border-slate-200/50 dark:border-slate-800/80 rounded-3xl shadow-2xl max-w-lg w-full flex flex-col max-h-[92vh] overflow-hidden transition-all duration-300 transform scale-100 animate-slide-up">
+    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto animate-fade-in">
+      
+      {/* Container adaptativo: bottom-sheet en móvil, tarjeta flotante en escritorio */}
+      <form 
+        onSubmit={handleSubmit} 
+        className="bg-white/95 dark:bg-slate-900/95 border-t sm:border border-slate-200/50 dark:border-slate-800/80 rounded-t-[32px] sm:rounded-3xl shadow-2xl max-w-lg w-full flex flex-col max-h-[88vh] sm:max-h-[90vh] overflow-hidden transition-all duration-300 transform translate-y-0 sm:scale-100 animate-slide-up"
+      >
         
-        {/* Cabecera Premium */}
-        <div className="p-5 sm:p-6 border-b border-slate-100/80 dark:border-slate-800 flex flex-col gap-4">
+        {/* Mobile Drag Indicator / Notch */}
+        <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto my-3 sm:hidden flex-shrink-0" />
+
+        {/* Cabecera */}
+        <div className="px-5 pb-4 sm:pt-6 sm:px-6 border-b border-slate-100/80 dark:border-slate-800 flex flex-col gap-4 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center shadow-md shadow-indigo-500/10">
@@ -147,6 +152,7 @@ export default function SimpleHeadacheForm({ onSave, onCancel, initialDate }: Si
               </h2>
             </div>
             <button
+              type="button"
               onClick={onCancel}
               className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 rounded-full transition-all duration-200"
               title="Cerrar modal"
@@ -156,7 +162,7 @@ export default function SimpleHeadacheForm({ onSave, onCancel, initialDate }: Si
           </div>
 
           {/* Segmented Control - iOS Style */}
-          <div className="bg-slate-100 dark:bg-slate-950 p-1 rounded-2xl flex gap-1 shadow-inner border border-slate-200/20">
+          <div className="bg-slate-100 dark:bg-slate-950 p-1 rounded-2xl flex gap-1 shadow-inner border border-slate-200/20 flex-shrink-0">
             <button
               type="button"
               onClick={() => setIsExpress(true)}
@@ -184,10 +190,10 @@ export default function SimpleHeadacheForm({ onSave, onCancel, initialDate }: Si
           </div>
         </div>
 
-        {/* Formulario */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5 sm:space-y-6">
+        {/* Cuerpo del Formulario (Scrolleable) */}
+        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5 sm:space-y-6">
           
-          {/* Fecha y Hora en paralelo */}
+          {/* Fecha y Hora */}
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-350 flex items-center gap-1.5">
@@ -217,7 +223,7 @@ export default function SimpleHeadacheForm({ onSave, onCancel, initialDate }: Si
             </div>
           </div>
 
-          {/* Intensidad con Visual Feedback */}
+          {/* Intensidad */}
           <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 sm:p-5 flex flex-col gap-4">
             <div className="flex justify-between items-center">
               <label className="text-sm font-bold text-slate-800">
@@ -246,7 +252,7 @@ export default function SimpleHeadacheForm({ onSave, onCancel, initialDate }: Si
             </div>
           </div>
 
-          {/* Medicamentos - Grilla de pastillas */}
+          {/* Medicamentos */}
           <div className="space-y-2">
             <label className="text-xs sm:text-sm font-bold text-slate-700 flex items-center gap-1.5">
               <Pill className="w-4 h-4 text-indigo-500" />
@@ -275,7 +281,7 @@ export default function SimpleHeadacheForm({ onSave, onCancel, initialDate }: Si
             </div>
           </div>
 
-          {/* Síntomas - Grilla de Emojis */}
+          {/* Síntomas */}
           <div className="space-y-2">
             <label className="text-xs sm:text-sm font-bold text-slate-700 flex items-center gap-1.5">
               <span>⚡</span>
@@ -304,7 +310,7 @@ export default function SimpleHeadacheForm({ onSave, onCancel, initialDate }: Si
             </div>
           </div>
 
-          {/* CAMPOS ADICIONALES (Sólo si no es Express) */}
+          {/* CAMPOS DETALLADOS */}
           {!isExpress && (
             <div className="space-y-5 sm:space-y-6 pt-2 border-t border-slate-100 animate-fade-in">
               
@@ -337,7 +343,7 @@ export default function SimpleHeadacheForm({ onSave, onCancel, initialDate }: Si
                 </div>
               </div>
 
-              {/* Horas de Sueño Slider */}
+              {/* Horas de Sueño */}
               <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 sm:p-5 flex flex-col gap-4">
                 <div className="flex justify-between items-center">
                   <label className="text-sm font-bold text-slate-800">
@@ -376,7 +382,7 @@ export default function SimpleHeadacheForm({ onSave, onCancel, initialDate }: Si
                 <textarea
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Describe cómo te sientes, el clima, o cualquier detalle que sientas relevante..."
+                  placeholder="Describe cómo te sientes, el clima, o cualquier detalle relevante..."
                   rows={3}
                   className="px-3 sm:px-4 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all duration-200 resize-none placeholder:text-slate-400"
                 />
@@ -385,10 +391,10 @@ export default function SimpleHeadacheForm({ onSave, onCancel, initialDate }: Si
             </div>
           )}
 
-        </form>
+        </div>
 
-        {/* Acciones del Footer */}
-        <div className="p-5 sm:p-6 border-t border-slate-100/80 bg-slate-50/50 flex items-center justify-between gap-3">
+        {/* Acciones del Footer - Optimizadas para Safe Area de móviles Notch/iOS */}
+        <div className="p-5 sm:p-6 border-t border-slate-100/80 bg-slate-50/50 flex items-center justify-between gap-3 flex-shrink-0 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
           <button
             type="button"
             onClick={onCancel}
@@ -397,8 +403,7 @@ export default function SimpleHeadacheForm({ onSave, onCancel, initialDate }: Si
             Cancelar
           </button>
           <button
-            type="button"
-            onClick={handleSubmit}
+            type="submit"
             className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs sm:text-sm font-bold rounded-xl shadow-lg shadow-indigo-600/10 hover:shadow-xl hover:shadow-indigo-600/20 active:scale-95 transition-all duration-200 flex items-center gap-2"
           >
             <Save className="w-4 h-4" />
@@ -406,7 +411,7 @@ export default function SimpleHeadacheForm({ onSave, onCancel, initialDate }: Si
           </button>
         </div>
 
-      </div>
+      </form>
     </div>
   );
 }
