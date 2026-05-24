@@ -97,8 +97,8 @@ const mapFromSupabase = (row: any): HeadacheEntry => {
  * Obtener todos los episodios registrados para el usuario activo
  */
 export async function getHeadacheEntries(userId: string): Promise<HeadacheEntry[]> {
-  if (!isSupabaseConfigured || !supabase) {
-    throw new Error('Supabase no está configurado');
+  if (!isSupabaseConfigured || !supabase || userId.includes('@')) {
+    return []; // Caer en local silenciosamente si la sesión del usuario es local (email)
   }
 
   const { data, error } = await supabase
@@ -120,8 +120,8 @@ export async function getHeadacheEntries(userId: string): Promise<HeadacheEntry[
  * Guardar o actualizar un episodio en la nube
  */
 export async function saveHeadacheEntry(userId: string, entry: HeadacheEntry): Promise<void> {
-  if (!isSupabaseConfigured || !supabase) {
-    return;
+  if (!isSupabaseConfigured || !supabase || userId.includes('@')) {
+    return; // Ignorar si es sesión local
   }
 
   const payload = mapToSupabase(entry, userId);
@@ -141,8 +141,8 @@ export async function saveHeadacheEntry(userId: string, entry: HeadacheEntry): P
  * Eliminar un episodio en la nube
  */
 export async function deleteHeadacheEntry(userId: string, entryId: string): Promise<void> {
-  if (!isSupabaseConfigured || !supabase) {
-    return;
+  if (!isSupabaseConfigured || !supabase || userId.includes('@')) {
+    return; // Ignorar si es sesión local
   }
 
   const { error } = await supabase
@@ -161,8 +161,8 @@ export async function deleteHeadacheEntry(userId: string, entryId: string): Prom
  * Sincronizar migración masiva de LocalStorage a Supabase en el primer inicio de sesión
  */
 export async function syncLocalEntriesToCloud(userId: string, localEntries: HeadacheEntry[]): Promise<void> {
-  if (!isSupabaseConfigured || !supabase || localEntries.length === 0) {
-    return;
+  if (!isSupabaseConfigured || !supabase || userId.includes('@') || localEntries.length === 0) {
+    return; // Ignorar si es sesión local o no hay datos
   }
 
   const payloads = localEntries.map(e => mapToSupabase(e, userId));
