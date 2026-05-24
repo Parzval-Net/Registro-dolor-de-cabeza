@@ -93,7 +93,7 @@ const AuthGate = ({
             <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: '18px', letterSpacing: '0.5px' }}>MigraCare</span>
           </div>
           
-          <img src="/auth_banner_illustration.png" alt="Cerebro Relajado" className="auth-brain-image" />
+          <img src="./auth_banner_illustration.png" alt="Cerebro Relajado" className="auth-brain-image" />
           
           <div className="auth-visual-text">
             <h2>Tu salud, siempre bajo tu control</h2>
@@ -105,11 +105,11 @@ const AuthGate = ({
         <div className="auth-form-column">
           
           {/* Cabezal Móvil (Solo visible en móviles < 768px) */}
-          <div className="auth-mobile-header" style={{ display: 'none' }}>
+          <div className="auth-mobile-header">
             <div className="auth-mobile-logo">
-              <img src="/auth_banner_illustration.png" alt="MigraCare Logo" />
+              <img src="./auth_banner_illustration.png" alt="MigraCare Logo" />
             </div>
-            <h2 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: '22px', margin: 0, color: 'var(--foreground)' }}>MigraCare</h2>
+            <h2>MigraCare</h2>
           </div>
 
           {/* Encabezado del Formulario adaptado según el Modo */}

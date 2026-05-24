@@ -186,7 +186,14 @@ const Index = () => {
     secondaryColor: '#EC4899',
     appIcon: 'Heart'
   });
-  const [authMode, setAuthMode] = useState<AuthMode>('login');
+  const [authMode, setAuthMode] = useState<AuthMode>(() => {
+    if (typeof window !== 'undefined') {
+      const db = getDatabase();
+      const hasUsers = Object.keys(db.users).length > 0;
+      return hasUsers ? 'login' : 'register';
+    }
+    return 'login';
+  });
   const [authBusy, setAuthBusy] = useState(false);
   const { toast } = useToast();
 
