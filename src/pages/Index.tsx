@@ -362,11 +362,24 @@ const Index = () => {
     }
 
     const checkSession = async () => {
+      // Detectar redireccionamiento de recuperación de contraseña
+      const params = new URLSearchParams(window.location.search);
+      const isResetPasswordFlow = params.get('action') === 'reset-password';
+
+      if (isResetPasswordFlow) {
+        setAuthMode('reset-password');
+      }
+
       // 1. Si Supabase está activo, intentamos recuperar la sesión nativa de Supabase primero
       if (dbConnected && supabase) {
         try {
           const { data: { session } } = await supabase.auth.getSession();
           if (session && session.user) {
+            if (isResetPasswordFlow) {
+              // Si es flujo de recuperación, no queremos mostrar el dashboard todavía
+              setUser(null);
+              return;
+            }
             const sUser = session.user;
             const userName = sUser.user_metadata?.name || getFirstName(sUser.email || 'usuario');
             setUser({
@@ -781,6 +794,108 @@ const Index = () => {
     }
   };
 
+  const handleForgotPassword = async (email: string) => {
+    if (!email) {
+      toast({
+        title: 'Faltan datos',
+        description: 'Por favor ingresa tu correo electrónico.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    setAuthBusy(true);
+    try {
+      if (dbConnected && supabase) {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + window.location.pathname + '?action=reset-password'
+        });
+        if (error) {
+          toast({
+            title: 'Error de recuperación',
+            description: error.message || 'No se pudo enviar el correo de recuperación.',
+            variant: 'destructive'
+          });
+          return;
+        }
+        toast({
+          title: 'Correo enviado',
+          description: 'Se ha enviado un enlace de recuperación de contraseña a tu correo electrónico.',
+        });
+        setAuthMode('login');
+      } else {
+        toast({
+          title: 'Cuentas locales sin nube',
+          description: 'Las cuentas locales no disponen de recuperación por correo electrónico. Regístrate en la nube para habilitar esta opción.',
+          variant: 'destructive'
+        });
+      }
+    } catch (err) {
+      console.error('Error al solicitar recuperación:', err);
+      toast({
+        title: 'Error',
+        description: 'Ocurrió un problema al procesar la solicitud.',
+        variant: 'destructive'
+      });
+    } finally {
+      setAuthBusy(false);
+    }
+  };
+
+  const handleResetPassword = async (password: string) => {
+    if (!password) {
+      toast({
+        title: 'Faltan datos',
+        description: 'Por favor ingresa la nueva contraseña.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    setAuthBusy(true);
+    try {
+      if (dbConnected && supabase) {
+        const { error } = await supabase.auth.updateUser({ password });
+        if (error) {
+          toast({
+            title: 'Error al actualizar',
+            description: error.message || 'No se pudo actualizar tu contraseña en la nube.',
+            variant: 'destructive'
+          });
+          return;
+        }
+
+        // Cerrar sesión para que inicien sesión limpia con la nueva contraseña
+        await supabase.auth.signOut();
+
+        toast({
+          title: 'Contraseña actualizada',
+          description: 'Tu nueva contraseña se ha guardado en la nube. Ya puedes iniciar sesión.',
+        });
+        setAuthMode('login');
+        
+        // Limpiar parámetros de URL
+        if (typeof window !== 'undefined') {
+          const newUrl = window.location.origin + window.location.pathname;
+          window.history.replaceState({}, document.title, newUrl);
+        }
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Esta función requiere estar conectado a Supabase Cloud.',
+          variant: 'destructive'
+        });
+      }
+    } catch (err) {
+      console.error('Error al restablecer contraseña:', err);
+      toast({
+        title: 'Error',
+        description: 'No se pudo restablecer la contraseña.',
+        variant: 'destructive'
+      });
+    } finally {
+      setAuthBusy(false);
+    }
+  };
+
   const handleLogout = async () => {
     if (dbConnected && supabase) {
       try {
@@ -882,6 +997,8 @@ const Index = () => {
           onModeChange={setAuthMode}
           onLogin={handleLoginSubmit}
           onRegister={handleRegisterSubmit}
+          onForgotPassword={handleForgotPassword}
+          onResetPassword={handleResetPassword}
           busy={authBusy}
         />
       </div>

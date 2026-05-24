@@ -24,10 +24,11 @@ import {
   Settings
 } from 'lucide-react';
 import UserAvatar from './UserAvatar';
+import ConnectionBadge from './ConnectionBadge';
 
 interface HeaderProps {
   onNewEntry: () => void;
-  user?: { name: string; email: string; avatar?: string } | null;
+  user?: { key?: string; name: string; email: string; avatar?: string } | null;
   onLogout?: () => void;
   currentView?: 'dashboard' | 'calendar' | 'trends' | 'episodes' | 'admin';
   onViewChange?: (view: 'dashboard' | 'calendar' | 'trends' | 'episodes' | 'admin') => void;
@@ -239,6 +240,9 @@ const Header = ({ onNewEntry, user, onLogout, currentView, onViewChange }: Heade
           <div className="flex items-center gap-2 shrink-0">
             {user ? (
               <>
+                {/* Indicador de Estado de Conexión */}
+                <ConnectionBadge user={user} />
+
                 {/* Desktop "Nuevo Episodio" Button */}
                 <button
                   onClick={onNewEntry}
