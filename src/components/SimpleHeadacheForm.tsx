@@ -1,13 +1,7 @@
 import React, { useState } from 'react';
 import { HeadacheEntry } from '@/types/headache';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Clock, Activity, Pill, FileText, X, Zap, Save, Moon } from 'lucide-react';
-import { Slider } from '@/components/ui/slider';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Calendar, Clock, X, Zap, Save, BrainCircuit, Activity, Pill } from 'lucide-react';
 
 interface SimpleHeadacheFormProps {
   onSave: (entry: HeadacheEntry) => void;
@@ -15,15 +9,14 @@ interface SimpleHeadacheFormProps {
   initialDate?: string;
 }
 
-const SimpleHeadacheForm = ({ onSave, onCancel, initialDate }: SimpleHeadacheFormProps) => {
-  const [isExpress, setIsExpress] = useState(false);
-  const isDark = false; // Exclusivo modo claro
+export default function SimpleHeadacheForm({ onSave, onCancel, initialDate }: SimpleHeadacheFormProps) {
+  const [isExpress, setIsExpress] = useState(true); // Rápido por defecto
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
     date: initialDate || new Date().toISOString().split('T')[0],
     time: new Date().toTimeString().slice(0, 5),
-    intensity: [5],
+    intensity: 5,
     medications: [] as string[],
     symptoms: [] as string[],
     triggers: [] as string[],
@@ -32,1384 +25,388 @@ const SimpleHeadacheForm = ({ onSave, onCancel, initialDate }: SimpleHeadacheFor
   });
 
   const medicationOptions = [
-    'Ibuprofeno', 'Paracetamol', 'Aspirina', 'Sumatriptán', 'Ninguno'
+    { name: 'Ibuprofeno', icon: '💊' },
+    { name: 'Paracetamol', icon: '💊' },
+    { name: 'Aspirina', icon: '💊' },
+    { name: 'Sumatriptán', icon: '⚡' },
+    { name: 'Ninguno', icon: '😌' }
   ];
 
   const symptomOptions = [
-    'Dolor pulsante', 'Dolor constante', 'Sensibilidad a la luz', 
-    'Sensibilidad al sonido', 'Náuseas', 'Vómitos', 'Mareos'
+    { name: 'Dolor pulsante', icon: '⚡' },
+    { name: 'Dolor constante', icon: '🤕' },
+    { name: 'Sensibilidad a la luz', icon: '☀️' },
+    { name: 'Sensibilidad al sonido', icon: '🔊' },
+    { name: 'Náuseas', icon: '🤢' },
+    { name: 'Vómitos', icon: '🤮' },
+    { name: 'Mareos', icon: '🌀' }
   ];
 
   const triggerOptions = [
-    'Estrés', 'Falta de sueño', 'Alcohol', 'Cafeína', 'Brillo/Luces', 'Saltarse comidas', 'Cambio de clima'
+    { name: 'Estrés', icon: '🤯' },
+    { name: 'Falta de sueño', icon: '😴' },
+    { name: 'Alcohol', icon: '🍷' },
+    { name: 'Cafeína', icon: '☕' },
+    { name: 'Brillo/Luces', icon: '💡' },
+    { name: 'Saltarse comidas', icon: '🍽️' },
+    { name: 'Cambio de clima', icon: '⛅' }
   ];
 
-  const toggleTrigger = (trigger: string) => {
+  const toggleMedication = (med: string) => {
+    setFormData(prev => {
+      // Si selecciona "Ninguno", desmarcar todos los demás
+      if (med === 'Ninguno') {
+        return prev.medications.includes('Ninguno')
+          ? { ...prev, medications: [] }
+          : { ...prev, medications: ['Ninguno'] };
+      }
+      // Si selecciona cualquier otro, remover "Ninguno" e intercalar
+      const filtered = prev.medications.filter(m => m !== 'Ninguno');
+      return {
+        ...prev,
+        medications: filtered.includes(med)
+          ? filtered.filter(m => m !== med)
+          : [...filtered, med]
+      };
+    });
+  };
+
+  const toggleSymptom = (sym: string) => {
     setFormData(prev => ({
       ...prev,
-      triggers: prev.triggers.includes(trigger)
-        ? prev.triggers.filter(t => t !== trigger)
-        : [...prev.triggers, trigger]
+      symptoms: prev.symptoms.includes(sym)
+        ? prev.symptoms.filter(s => s !== sym)
+        : [...prev.symptoms, sym]
     }));
   };
 
-  const handleExpressSubmit = () => {
+  const toggleTrigger = (trig: string) => {
+    setFormData(prev => ({
+      ...prev,
+      triggers: prev.triggers.includes(trig)
+        ? prev.triggers.filter(t => t !== trig)
+        : [...prev.triggers, trig]
+    }));
+  };
+
+  const getIntensityInfo = (val: number) => {
+    if (val <= 3) return { label: 'Leve', color: 'text-emerald-600 bg-emerald-50 border-emerald-100', emoji: '😌' };
+    if (val <= 6) return { label: 'Moderado', color: 'text-orange-600 bg-orange-50 border-orange-100', emoji: '😐' };
+    if (val <= 8) return { label: 'Severo', color: 'text-red-600 bg-red-50 border-red-100', emoji: '😟' };
+    return { label: 'Extremo', color: 'text-purple-600 bg-purple-50 border-purple-100', emoji: '😱' };
+  };
+
+  const getSleepEmoji = (hours: number) => {
+    if (hours < 6) return '🥱';
+    if (hours < 9) return '😌';
+    return '⚡';
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
     const entry: HeadacheEntry = {
       id: Date.now().toString(),
       date: formData.date,
       time: formData.time,
-      intensity: formData.intensity[0],
+      intensity: formData.intensity,
       duration: 0,
       medications: formData.medications,
-      triggers: [],
+      triggers: isExpress ? [] : formData.triggers,
       symptoms: formData.symptoms,
       relievedBy: [],
       mood: '',
-      stressLevel: 3,
-      notes: 'Registro rápido',
+      stressLevel: 3, // Simplificado a 3
+      sleepHours: isExpress ? undefined : formData.sleepHours,
+      notes: isExpress ? 'Registro rápido' : formData.notes,
     };
+
     onSave(entry);
-    toast({
-      title: "Registro guardado",
-      description: "Tu dolor de cabeza ha sido registrado rápidamente.",
-    });
+
+    // Haptic feedback
+    if ('vibrate' in navigator) {
+      navigator.vibrate(100);
+    }
   };
 
-  const handleCompleteSubmit = () => {
-    const entry: HeadacheEntry = {
-      id: Date.now().toString(),
-      date: formData.date,
-      time: formData.time,
-      intensity: formData.intensity[0],
-      duration: 0,
-      medications: formData.medications,
-      triggers: formData.triggers,
-      symptoms: formData.symptoms,
-      relievedBy: [],
-      mood: '',
-      stressLevel: 3,
-      sleepHours: formData.sleepHours,
-      notes: formData.notes,
-    };
-    onSave(entry);
-    toast({
-      title: "Registro completo guardado",
-      description: "Tu episodio ha sido registrado con todos los detalles.",
-    });
-  };
-
-  const toggleMedication = (medication: string) => {
-    setFormData(prev => ({
-      ...prev,
-      medications: prev.medications.includes(medication)
-        ? prev.medications.filter(m => m !== medication)
-        : [...prev.medications, medication]
-    }));
-  };
-
-  const toggleSymptom = (symptom: string) => {
-    setFormData(prev => ({
-      ...prev,
-      symptoms: prev.symptoms.includes(symptom)
-        ? prev.symptoms.filter(s => s !== symptom)
-        : [...prev.symptoms, symptom]
-    }));
-  };
-
-  const getIntensityLabel = (value: number) => {
-    if (value <= 3) return 'Leve';
-    if (value <= 6) return 'Moderado';
-    if (value <= 8) return 'Severo';
-    return 'Extremo';
-  };
-
-  if (isExpress) {
-    return (
-      <div 
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.5)',
-          backdropFilter: 'blur(8px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '1rem'
-        }}
-      >
-        <div 
-          style={{
-            maxWidth: '500px',
-            width: '100%',
-            background: isDark ? 'rgba(30, 41, 59, 0.92)' : 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(20px)',
-            borderRadius: '24px',
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(255, 255, 255, 0.3)',
-            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.25)',
-            overflow: 'hidden',
-            color: isDark ? '#f8fafc' : '#1e293b'
-          }}
-        >
-          <div 
-            style={{
-              padding: '2rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '2rem'
-            }}
-          >
-            {/* Header - Optimizado */}
-            <div 
-              style={{
-                textAlign: 'center',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '1.5rem'
-              }}
-            >
-              <div 
-                style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '24px',
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 20px 40px rgba(102, 126, 234, 0.4)',
-                  animation: 'float 3s ease-in-out infinite'
-                }}
-              >
-                <Zap className="h-10 w-10 text-white" />
-              </div>
-              <div>
-                <h2 
-                  style={{
-                    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    fontSize: '2rem',
-                    fontWeight: 700,
-                    color: isDark ? '#f8fafc' : '#1e293b',
-                    margin: 0,
-                    lineHeight: 1.2
-                  }}
-                >
-                  Registro Express
-                </h2>
-                <p 
-                  style={{
-                    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    fontSize: '1rem',
-                    color: '#64748b',
-                    margin: 0,
-                    marginTop: '0.5rem'
-                  }}
-                >
-                  Solo lo esencial, en segundos
-                </p>
-              </div>
-            </div>
-
-            {/* Form Content - Optimizado */}
-            <div 
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1.5rem'
-              }}
-            >
-              {/* Fecha y Hora */}
-              <div 
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, 1fr)',
-                  gap: '1rem'
-                }}
-              >
-                <div 
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.5rem'
-                  }}
-                >
-                  <label 
-                    style={{
-                      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      fontSize: '0.875rem',
-                      fontWeight: 600,
-                      color: '#374151'
-                    }}
-                  >
-                    Fecha
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    style={{
-                      padding: '0.75rem 1rem',
-                      borderRadius: '12px',
-                      border: '2px solid #e2e8f0',
-                      background: 'rgba(255, 255, 255, 0.9)',
-                      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      fontSize: '0.875rem',
-                      color: '#374151',
-                      transition: 'all 0.3s ease',
-                      outline: 'none'
-                    }}
-                    onFocus={(e) => {
-                      e.currentTarget.style.borderColor = '#667eea';
-                      e.currentTarget.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.borderColor = '#e2e8f0';
-                      e.currentTarget.style.boxShadow = 'none';
-                    }}
-                  />
-                </div>
-                <div 
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.5rem'
-                  }}
-                >
-                  <label 
-                    style={{
-                      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      fontSize: '0.875rem',
-                      fontWeight: 600,
-                      color: '#374151'
-                    }}
-                  >
-                    Hora
-                  </label>
-                  <input
-                    type="time"
-                    value={formData.time}
-                    onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                    style={{
-                      padding: '0.75rem 1rem',
-                      borderRadius: '12px',
-                      border: '2px solid #e2e8f0',
-                      background: 'rgba(255, 255, 255, 0.9)',
-                      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      fontSize: '0.875rem',
-                      color: '#374151',
-                      transition: 'all 0.3s ease',
-                      outline: 'none'
-                    }}
-                    onFocus={(e) => {
-                      e.currentTarget.style.borderColor = '#667eea';
-                      e.currentTarget.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.borderColor = '#e2e8f0';
-                      e.currentTarget.style.boxShadow = 'none';
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Intensidad - Optimizada */}
-              <div 
-                style={{
-                  background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(10px)',
-                  borderRadius: '20px',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
-                  padding: '2rem'
-                }}
-              >
-                <label 
-                  style={{
-                    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    fontSize: '1.125rem',
-                    fontWeight: 600,
-                    color: isDark ? '#f8fafc' : '#1e293b',
-                    textAlign: 'center',
-                    display: 'block',
-                    marginBottom: '1.5rem'
-                  }}
-                >
-                  Intensidad del dolor
-                </label>
-                <div 
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '1.5rem'
-                  }}
-                >
-                  <div 
-                    style={{
-                      textAlign: 'center'
-                    }}
-                  >
-                    <div 
-                      style={{
-                        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        fontSize: '3rem',
-                        fontWeight: 700,
-                        color: isDark ? '#f8fafc' : '#1e293b',
-                        margin: 0,
-                        lineHeight: 1
-                      }}
-                    >
-                      {formData.intensity[0]}
-                    </div>
-                    <div 
-                      style={{
-                        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        fontSize: '1.125rem',
-                        fontWeight: 600,
-                        color: '#64748b',
-                        margin: 0,
-                        marginTop: '0.5rem'
-                      }}
-                    >
-                      {getIntensityLabel(formData.intensity[0])}
-                    </div>
-                  </div>
-                  <Slider
-                    value={formData.intensity}
-                    onValueChange={(value) => setFormData({ ...formData, intensity: value })}
-                    max={10}
-                    min={1}
-                    step={1}
-                    className="w-full"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Botones - Optimizados */}
-            <div 
-              style={{
-                display: 'flex',
-                gap: '1rem'
-              }}
-            >
-              <button 
-                onClick={onCancel}
-                style={{
-                  flex: 1,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '0.875rem 1.5rem',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  borderRadius: '12px',
-                  border: '2px solid #e2e8f0',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: 'rgba(255, 255, 255, 0.8)',
-                  color: '#64748b'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#cbd5e1';
-                  e.currentTarget.style.background = 'rgba(248, 250, 252, 0.8)';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#e2e8f0';
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.8)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
-              >
-                Cancelar
-              </button>
-              <button 
-                onClick={handleExpressSubmit}
-                style={{
-                  flex: 1,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '0.875rem 1.5rem',
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  borderRadius: '12px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: 'white',
-                  boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 8px 20px rgba(102, 126, 234, 0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.3)';
-                }}
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Guardar
-              </button>
-            </div>
-
-            {/* Botón de cambio a modo completo */}
-            <div 
-              style={{
-                textAlign: 'center'
-              }}
-            >
-              <button 
-                onClick={() => setIsExpress(false)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '0.5rem 1rem',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  background: 'rgba(255, 255, 255, 0.5)',
-                  color: '#64748b'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(102, 126, 234, 0.1)';
-                  e.currentTarget.style.borderColor = '#667eea';
-                  e.currentTarget.style.color = '#667eea';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.5)';
-                  e.currentTarget.style.borderColor = '#e2e8f0';
-                  e.currentTarget.style.color = '#64748b';
-                }}
-              >
-                ¿Quieres agregar más detalles?
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const intInfo = getIntensityInfo(formData.intensity);
 
   return (
-    <div 
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0, 0, 0, 0.5)',
-        backdropFilter: 'blur(8px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        padding: '1rem'
-      }}
-    >
-      <div 
-        style={{
-          maxWidth: '800px',
-          width: '100%',
-          maxHeight: '95vh',
-          background: isDark ? 'rgba(30, 41, 59, 0.92)' : 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(20px)',
-          borderRadius: '24px',
-          border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(255, 255, 255, 0.3)',
-          boxShadow: '0 25px 50px rgba(0, 0, 0, 0.25)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          color: isDark ? '#f8fafc' : '#1e293b'
-        }}
-      >
-        {/* Header - Optimizado */}
-        <div 
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '1.5rem',
-            borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
-            flexShrink: 0,
-            background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)'
-          }}
-        >
-          <div 
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem'
-            }}
-          >
-            <div 
-              style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '16px',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 8px 20px rgba(102, 126, 234, 0.3)'
-              }}
-            >
-              <Activity className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h2 
-                style={{
-                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  fontSize: '1.5rem',
-                  fontWeight: 700,
-                  color: isDark ? '#f8fafc' : '#1e293b',
-                  margin: 0,
-                  lineHeight: 1.2
-                }}
-              >
-                Registrar Episodio
+    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+      <div className="bg-white/95 dark:bg-slate-900/95 border border-slate-200/50 dark:border-slate-800/80 rounded-3xl shadow-2xl max-w-lg w-full flex flex-col max-h-[92vh] overflow-hidden transition-all duration-300 transform scale-100 animate-slide-up">
+        
+        {/* Cabecera Premium */}
+        <div className="p-5 sm:p-6 border-b border-slate-100/80 dark:border-slate-800 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center shadow-md shadow-indigo-500/10">
+                <BrainCircuit className="h-4.5 w-4.5 text-white" />
+              </div>
+              <h2 className="text-lg sm:text-xl font-extrabold text-slate-800 dark:text-slate-100 font-outfit">
+                Registrar Dolor
               </h2>
-              <p 
-                style={{
-                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  fontSize: '0.875rem',
-                  color: '#64748b',
-                  margin: 0,
-                  marginTop: '0.25rem'
-                }}
-              >
-                Información básica del dolor de cabeza
-              </p>
             </div>
+            <button
+              onClick={onCancel}
+              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 rounded-full transition-all duration-200"
+              title="Cerrar modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
-          <button
-            onClick={onCancel}
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '12px',
-              background: 'rgba(148, 163, 184, 0.1)',
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              color: '#64748b'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(148, 163, 184, 0.2)';
-              e.currentTarget.style.transform = 'scale(1.05)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(148, 163, 184, 0.1)';
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-          >
-            <X className="w-5 h-5" />
-          </button>
+
+          {/* Segmented Control - iOS Style */}
+          <div className="bg-slate-100 dark:bg-slate-950 p-1 rounded-2xl flex gap-1 shadow-inner border border-slate-200/20">
+            <button
+              type="button"
+              onClick={() => setIsExpress(true)}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 ${
+                isExpress
+                  ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/5'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800'
+              }`}
+            >
+              <Zap className="w-3.5 h-3.5" />
+              <span>Registro Rápido</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsExpress(false)}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 ${
+                !isExpress
+                  ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/5'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5" />
+              <span>Detallado</span>
+            </button>
+          </div>
         </div>
 
-        {/* Content - Scrollable - Optimizado */}
-        <div 
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '1.5rem',
-            background: 'rgba(248, 250, 252, 0.5)'
-          }}
-        >
-          <div 
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1.5rem'
-            }}
-          >
-            {/* Fecha y Hora - Optimizado */}
-            <div 
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: '1rem'
-              }}
-            >
-              <div 
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.5rem'
-                }}
-              >
-                <label 
-                  style={{
-                    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    color: '#374151',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                  }}
-                >
-                  <Calendar className="w-4 h-4" style={{ color: '#667eea' }} />
-                  Fecha
-                </label>
-                <input
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  style={{
-                    padding: '0.75rem 1rem',
-                    borderRadius: '12px',
-                    border: '2px solid #e2e8f0',
-                    background: 'rgba(255, 255, 255, 0.8)',
-                    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    fontSize: '0.875rem',
-                    color: '#374151',
-                    transition: 'all 0.3s ease',
-                    outline: 'none'
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = '#667eea';
-                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = '#e2e8f0';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
-                />
-              </div>
-              <div 
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.5rem'
-                }}
-              >
-                <label 
-                  style={{
-                    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    color: '#374151',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                  }}
-                >
-                  <Clock className="w-4 h-4" style={{ color: '#667eea' }} />
-                  Hora
-                </label>
-                <input
-                  type="time"
-                  value={formData.time}
-                  onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                  style={{
-                    padding: '0.75rem 1rem',
-                    borderRadius: '12px',
-                    border: '2px solid #e2e8f0',
-                    background: 'rgba(255, 255, 255, 0.8)',
-                    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    fontSize: '0.875rem',
-                    color: '#374151',
-                    transition: 'all 0.3s ease',
-                    outline: 'none'
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = '#667eea';
-                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = '#e2e8f0';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
-                />
-              </div>
+        {/* Formulario */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5 sm:space-y-6">
+          
+          {/* Fecha y Hora en paralelo */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-350 flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+                <span>Fecha</span>
+              </label>
+              <input
+                type="date"
+                required
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                className="px-3 sm:px-4 py-2.5 bg-slate-50/70 border border-slate-200 dark:border-slate-800 rounded-xl text-xs sm:text-sm font-medium text-slate-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all duration-200"
+              />
             </div>
-
-            {/* Intensidad - Optimizado */}
-            <div 
-              style={{
-                background: isDark ? 'rgba(15, 23, 42, 0.45)' : 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(20px)',
-                borderRadius: '20px',
-                border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(255, 255, 255, 0.3)',
-                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
-                padding: '1.5rem',
-                marginBottom: '1.5rem'
-              }}
-            >
-              <h3 
-                style={{
-                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  fontSize: '1.125rem',
-                  fontWeight: 600,
-                  color: isDark ? '#f8fafc' : '#1e293b',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  margin: 0,
-                  marginBottom: '1rem'
-                }}
-              >
-                <Activity className="w-5 h-5" style={{ color: '#ef4444' }} />
-                Intensidad del dolor
-              </h3>
-              <div 
-                style={{
-                  textAlign: 'center',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '1rem'
-                }}
-              >
-                <div 
-                  style={{
-                    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    fontSize: '3rem',
-                    fontWeight: 800,
-                    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                    lineHeight: 1,
-                    textShadow: '0 4px 8px rgba(239, 68, 68, 0.3)'
-                  }}
-                >
-                  {formData.intensity[0]}
-                </div>
-                <div 
-                  style={{
-                    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    fontSize: '1.125rem',
-                    fontWeight: 600,
-                    color: '#64748b',
-                    marginBottom: '0.5rem'
-                  }}
-                >
-                  {getIntensityLabel(formData.intensity[0])}
-                </div>
-                <div 
-                  style={{
-                    padding: '0 1rem'
-                  }}
-                >
-                  <Slider
-                    value={formData.intensity}
-                    onValueChange={(value) => setFormData({ ...formData, intensity: value })}
-                    max={10}
-                    min={1}
-                    step={1}
-                    className="w-full"
-                    style={{
-                      height: '8px'
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Medicamentos - Optimizado */}
-            <div 
-              style={{
-                background: isDark ? 'rgba(15, 23, 42, 0.45)' : 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(20px)',
-                borderRadius: '20px',
-                border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(255, 255, 255, 0.3)',
-                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
-                padding: '1.5rem',
-                marginBottom: '1.5rem'
-              }}
-            >
-              <div 
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '1rem'
-                }}
-              >
-                <h3 
-                  style={{
-                    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    fontSize: '1.125rem',
-                    fontWeight: 600,
-                    color: isDark ? '#f8fafc' : '#1e293b',
-                    display: 'flex',
-                    alignItems: 'center',
-                    margin: 0
-                  }}
-                >
-                  <Pill className="w-5 h-5 mr-2" style={{ color: '#667eea' }} />
-                  Medicamentos tomados
-                </h3>
-                {formData.medications.length > 0 && (
-                  <div 
-                    style={{
-                      padding: '0.25rem 0.75rem',
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                      color: 'white',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      borderRadius: '20px',
-                      boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
-                    }}
-                  >
-                    {formData.medications.length} seleccionado{formData.medications.length !== 1 ? 's' : ''}
-                  </div>
-                )}
-              </div>
-              <div 
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                  gap: '0.75rem'
-                }}
-              >
-                {medicationOptions.map((medication) => {
-                  const isSelected = formData.medications.includes(medication);
-                  return (
-                    <div
-                      key={medication}
-                      onClick={() => toggleMedication(medication)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.75rem',
-                        padding: '1rem',
-                        borderRadius: '16px',
-                        border: isSelected 
-                          ? '2px solid #667eea' 
-                          : '1px solid #e2e8f0',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                        background: isSelected 
-                          ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)'
-                          : 'rgba(255, 255, 255, 0.8)',
-                        boxShadow: isSelected 
-                          ? '0 10px 25px rgba(102, 126, 234, 0.2)'
-                          : '0 4px 12px rgba(0, 0, 0, 0.05)',
-                        userSelect: 'none'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isSelected) {
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.1)';
-                          e.currentTarget.style.borderColor = '#667eea';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isSelected) {
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.05)';
-                          e.currentTarget.style.borderColor = '#e2e8f0';
-                        }
-                      }}
-                    >
-                      <div 
-                        style={{
-                          width: '20px',
-                          height: '20px',
-                          borderRadius: '6px',
-                          border: isSelected ? '2px solid #667eea' : '2px solid #cbd5e1',
-                          background: isSelected 
-                            ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                            : 'white',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'all 0.3s ease'
-                        }}
-                      >
-                        {isSelected && (
-                          <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'white' }}>
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </div>
-                      <span 
-                        style={{
-                          fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                          fontSize: '0.875rem',
-                          fontWeight: isSelected ? 600 : 500,
-                          color: isSelected ? '#1e293b' : '#475569',
-                          flex: 1
-                        }}
-                      >
-                        {medication}
-                      </span>
-                      {isSelected && (
-                        <div 
-                          style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                            animation: 'pulse 2s infinite'
-                          }}
-                        />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Síntomas - Optimizado */}
-            <div 
-              style={{
-                background: isDark ? 'rgba(15, 23, 42, 0.45)' : 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(20px)',
-                borderRadius: '20px',
-                border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(255, 255, 255, 0.3)',
-                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
-                padding: '1.5rem',
-                marginBottom: '1.5rem'
-              }}
-            >
-              <div 
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '1rem'
-                }}
-              >
-                <h3 
-                  style={{
-                    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    fontSize: '1.125rem',
-                    fontWeight: 600,
-                    color: isDark ? '#f8fafc' : '#1e293b',
-                    display: 'flex',
-                    alignItems: 'center',
-                    margin: 0
-                  }}
-                >
-                  <Activity className="w-5 h-5 mr-2" style={{ color: '#f59e0b' }} />
-                  Síntomas experimentados
-                </h3>
-                {formData.symptoms.length > 0 && (
-                  <div 
-                    style={{
-                      padding: '0.25rem 0.75rem',
-                      background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                      color: 'white',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      borderRadius: '20px',
-                      boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)'
-                    }}
-                  >
-                    {formData.symptoms.length} seleccionado{formData.symptoms.length !== 1 ? 's' : ''}
-                  </div>
-                )}
-              </div>
-              <div 
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr',
-                  gap: '0.5rem'
-                }}
-              >
-                {symptomOptions.map((symptom) => {
-                  const isSelected = formData.symptoms.includes(symptom);
-                  return (
-                    <div
-                      key={symptom}
-                      onClick={() => toggleSymptom(symptom)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.75rem',
-                        padding: '1rem',
-                        borderRadius: '16px',
-                        border: isSelected 
-                          ? '2px solid #f59e0b' 
-                          : '1px solid #e2e8f0',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                        background: isSelected 
-                          ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.1) 100%)'
-                          : 'rgba(255, 255, 255, 0.8)',
-                        boxShadow: isSelected 
-                          ? '0 10px 25px rgba(245, 158, 11, 0.2)'
-                          : '0 4px 12px rgba(0, 0, 0, 0.05)',
-                        userSelect: 'none'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isSelected) {
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.1)';
-                          e.currentTarget.style.borderColor = '#f59e0b';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isSelected) {
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.05)';
-                          e.currentTarget.style.borderColor = '#e2e8f0';
-                        }
-                      }}
-                    >
-                      <div 
-                        style={{
-                          width: '20px',
-                          height: '20px',
-                          borderRadius: '6px',
-                          border: isSelected ? '2px solid #f59e0b' : '2px solid #cbd5e1',
-                          background: isSelected 
-                            ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
-                            : 'white',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'all 0.3s ease'
-                        }}
-                      >
-                        {isSelected && (
-                          <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'white' }}>
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </div>
-                      <span 
-                        style={{
-                          fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                          fontSize: '0.875rem',
-                          fontWeight: isSelected ? 600 : 500,
-                          color: isSelected ? '#1e293b' : '#475569',
-                          flex: 1
-                        }}
-                      >
-                        {symptom}
-                      </span>
-                      {isSelected && (
-                        <div 
-                          style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                            animation: 'pulse 2s infinite'
-                          }}
-                        />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Horas de Sueño */}
-            <div 
-              style={{
-                background: isDark ? 'rgba(15, 23, 42, 0.45)' : 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(20px)',
-                borderRadius: '20px',
-                border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(255, 255, 255, 0.3)',
-                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
-                padding: '1.5rem',
-                marginBottom: '1.5rem'
-              }}
-            >
-              <h3 
-                style={{
-                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  fontSize: '1.125rem',
-                  fontWeight: 600,
-                  color: isDark ? '#f8fafc' : '#1e293b',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  margin: 0,
-                  marginBottom: '1rem'
-                }}
-              >
-                <Moon className="w-5 h-5" style={{ color: '#6366f1' }} />
-                Horas de sueño la noche anterior
-              </h3>
-              <div 
-                style={{
-                  textAlign: 'center',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '1rem'
-                }}
-              >
-                <div 
-                  style={{
-                    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    fontSize: '3rem',
-                    fontWeight: 800,
-                    color: isDark ? '#60a5fa' : '#3b82f6',
-                    lineHeight: 1
-                  }}
-                >
-                  {formData.sleepHours} hrs
-                </div>
-                <div style={{ padding: '0 1rem' }}>
-                  <Slider
-                    value={[formData.sleepHours]}
-                    onValueChange={(value) => setFormData({ ...formData, sleepHours: value[0] })}
-                    max={12}
-                    min={3}
-                    step={1}
-                    className="w-full"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Desencadenantes */}
-            <div 
-              style={{
-                background: isDark ? 'rgba(15, 23, 42, 0.45)' : 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(20px)',
-                borderRadius: '20px',
-                border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(255, 255, 255, 0.3)',
-                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
-                padding: '1.5rem',
-                marginBottom: '1.5rem'
-              }}
-            >
-              <h3 
-                style={{
-                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  fontSize: '1.125rem',
-                  fontWeight: 600,
-                  color: isDark ? '#f8fafc' : '#1e293b',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  margin: 0,
-                  marginBottom: '1rem'
-                }}
-              >
-                <Zap className="w-5 h-5" style={{ color: '#f59e0b' }} />
-                Factores desencadenantes
-              </h3>
-              <div 
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-                  gap: '0.75rem'
-                }}
-              >
-                {triggerOptions.map(trigger => {
-                  const isSelected = formData.triggers.includes(trigger);
-                  return (
-                    <div 
-                      key={trigger}
-                      onClick={() => toggleTrigger(trigger)}
-                      style={{
-                        padding: '0.75rem',
-                        borderRadius: '12px',
-                        background: isSelected 
-                          ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' 
-                          : isDark ? 'rgba(15, 23, 42, 0.4)' : 'rgba(248, 250, 252, 0.8)',
-                        color: isSelected ? 'white' : isDark ? '#cbd5e1' : '#475569',
-                        border: isSelected 
-                          ? 'none' 
-                          : isDark ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid #e2e8f0',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        boxShadow: isSelected ? '0 4px 12px rgba(99, 102, 241, 0.2)' : 'none'
-                      }}
-                    >
-                      <div 
-                        style={{
-                          width: '16px',
-                          height: '16px',
-                          borderRadius: '4px',
-                          border: isSelected ? 'none' : '2px solid rgba(99, 102, 241, 0.4)',
-                          background: isSelected ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0
-                        }}
-                      >
-                        {isSelected && (
-                          <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'white' }}>
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </div>
-                      <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                        {trigger}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Notas */}
-            <div className="card-beautiful p-4">
-              <h3 className="text-base font-semibold mb-3 flex items-center">
-                <FileText className="w-4 h-4 mr-2 text-primary" />
-                Notas adicionales
-              </h3>
-              <Textarea
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="¿Algo más que quieras recordar sobre este episodio?"
-                className="input-beautiful min-h-[60px]"
-                rows={2}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-350 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-indigo-500" />
+                <span>Hora</span>
+              </label>
+              <input
+                type="time"
+                required
+                value={formData.time}
+                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                className="px-3 sm:px-4 py-2.5 bg-slate-50/70 border border-slate-200 dark:border-slate-800 rounded-xl text-xs sm:text-sm font-medium text-slate-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all duration-200"
               />
             </div>
           </div>
-        </div>
 
-        {/* Footer - Fixed - Optimizado */}
-        <div 
-          style={{
-            flexShrink: 0,
-            padding: '1.5rem',
-            borderTop: '1px solid rgba(226, 232, 240, 0.5)',
-            background: 'rgba(255, 255, 255, 0.8)',
-            backdropFilter: 'blur(10px)'
-          }}
-        >
-          <div 
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: '1rem',
-              flexWrap: 'wrap'
-            }}
-          >
-            {/* Botón Modo Express */}
-            <button 
-              onClick={() => setIsExpress(true)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '0.75rem 1.5rem',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                borderRadius: '12px',
-                border: '2px solid #f59e0b',
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                background: 'rgba(255, 255, 255, 0.8)',
-                color: '#f59e0b',
-                minWidth: '140px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#f59e0b';
-                e.currentTarget.style.color = 'white';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(245, 158, 11, 0.3)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.8)';
-                e.currentTarget.style.color = '#f59e0b';
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-            >
-              <Zap className="w-4 h-4 mr-2" />
-              Modo Express
-            </button>
-            
-            {/* Botones de Acción */}
-            <div 
-              style={{
-                display: 'flex',
-                gap: '0.75rem',
-                alignItems: 'center'
-              }}
-            >
-              <button 
-                onClick={onCancel}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '0.75rem 1.5rem',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  borderRadius: '12px',
-                  border: '2px solid #e2e8f0',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: 'rgba(255, 255, 255, 0.8)',
-                  color: '#64748b',
-                  minWidth: '100px'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#cbd5e1';
-                  e.currentTarget.style.background = 'rgba(248, 250, 252, 0.8)';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#e2e8f0';
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.8)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
-              >
-                Cancelar
-              </button>
-              <button 
-                onClick={handleCompleteSubmit}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '0.75rem 1.5rem',
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  borderRadius: '12px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: 'white',
-                  boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
-                  minWidth: '120px'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 8px 20px rgba(102, 126, 234, 0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.3)';
-                }}
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Guardar
-              </button>
+          {/* Intensidad con Visual Feedback */}
+          <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 sm:p-5 flex flex-col gap-4">
+            <div className="flex justify-between items-center">
+              <label className="text-sm font-bold text-slate-800">
+                ¿Qué tan fuerte es el dolor?
+              </label>
+              <div className={`px-3 py-1 rounded-full text-xs font-extrabold border ${intInfo.color} flex items-center gap-1.5 transition-all duration-300`}>
+                <span className="text-sm">{intInfo.emoji}</span>
+                <span>{formData.intensity}/10 — {intInfo.label}</span>
+              </div>
+            </div>
+
+            <div className="relative py-2">
+              <input
+                type="range"
+                min="1"
+                max="10"
+                value={formData.intensity}
+                onChange={(e) => setFormData({ ...formData, intensity: parseInt(e.target.value) })}
+                className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-indigo-600 outline-none"
+              />
+              <div className="flex justify-between text-[10px] sm:text-xs text-slate-400 font-bold px-1 mt-2">
+                <span>1 (Mínimo)</span>
+                <span>5 (Medio)</span>
+                <span>10 (Máximo)</span>
+              </div>
             </div>
           </div>
+
+          {/* Medicamentos - Grilla de pastillas */}
+          <div className="space-y-2">
+            <label className="text-xs sm:text-sm font-bold text-slate-700 flex items-center gap-1.5">
+              <Pill className="w-4 h-4 text-indigo-500" />
+              <span>Medicamento tomado</span>
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {medicationOptions.map((med) => {
+                const isSelected = formData.medications.includes(med.name);
+                return (
+                  <button
+                    type="button"
+                    key={med.name}
+                    onClick={() => toggleMedication(med.name)}
+                    className={`px-3 py-2 text-xs sm:text-sm rounded-xl font-bold border transition-all duration-200 flex items-center gap-1.5 ${
+                      isSelected
+                        ? 'bg-indigo-600 border-indigo-500 text-white shadow-md shadow-indigo-600/10'
+                        : 'bg-white hover:bg-indigo-50/40 border-slate-200 text-slate-600 hover:text-indigo-600'
+                    }`}
+                  >
+                    <span>{med.icon}</span>
+                    <span>{med.name}</span>
+                    {isSelected && <span className="text-[10px]">✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Síntomas - Grilla de Emojis */}
+          <div className="space-y-2">
+            <label className="text-xs sm:text-sm font-bold text-slate-700 flex items-center gap-1.5">
+              <span>⚡</span>
+              <span>Síntomas experimentados</span>
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {symptomOptions.map((sym) => {
+                const isSelected = formData.symptoms.includes(sym.name);
+                return (
+                  <button
+                    type="button"
+                    key={sym.name}
+                    onClick={() => toggleSymptom(sym.name)}
+                    className={`px-3 py-2 text-xs sm:text-sm rounded-xl font-bold border transition-all duration-200 flex items-center gap-1.5 ${
+                      isSelected
+                        ? 'bg-indigo-600 border-indigo-500 text-white shadow-md shadow-indigo-600/10'
+                        : 'bg-white hover:bg-indigo-50/40 border-slate-200 text-slate-600 hover:text-indigo-600'
+                    }`}
+                  >
+                    <span>{sym.icon}</span>
+                    <span>{sym.name}</span>
+                    {isSelected && <span className="text-[10px]">✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* CAMPOS ADICIONALES (Sólo si no es Express) */}
+          {!isExpress && (
+            <div className="space-y-5 sm:space-y-6 pt-2 border-t border-slate-100 animate-fade-in">
+              
+              {/* Desencadenantes */}
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-bold text-slate-700 flex items-center gap-1.5">
+                  <span>🤯</span>
+                  <span>Posibles desencadenantes</span>
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {triggerOptions.map((trig) => {
+                    const isSelected = formData.triggers.includes(trig.name);
+                    return (
+                      <button
+                        type="button"
+                        key={trig.name}
+                        onClick={() => toggleTrigger(trig.name)}
+                        className={`px-3 py-2 text-xs sm:text-sm rounded-xl font-bold border transition-all duration-200 flex items-center gap-1.5 ${
+                          isSelected
+                            ? 'bg-indigo-600 border-indigo-500 text-white shadow-md shadow-indigo-600/10'
+                            : 'bg-white hover:bg-indigo-50/40 border-slate-200 text-slate-600 hover:text-indigo-600'
+                        }`}
+                      >
+                        <span>{trig.icon}</span>
+                        <span>{trig.name}</span>
+                        {isSelected && <span className="text-[10px]">✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Horas de Sueño Slider */}
+              <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 sm:p-5 flex flex-col gap-4">
+                <div className="flex justify-between items-center">
+                  <label className="text-sm font-bold text-slate-800">
+                    ¿Cuántas horas dormiste anoche?
+                  </label>
+                  <div className="px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-extrabold text-slate-700 flex items-center gap-1.5">
+                    <span>{getSleepEmoji(formData.sleepHours)}</span>
+                    <span>{formData.sleepHours} Horas</span>
+                  </div>
+                </div>
+
+                <div className="relative py-1">
+                  <input
+                    type="range"
+                    min="3"
+                    max="12"
+                    step="0.5"
+                    value={formData.sleepHours}
+                    onChange={(e) => setFormData({ ...formData, sleepHours: parseFloat(e.target.value) })}
+                    className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-indigo-600 outline-none"
+                  />
+                  <div className="flex justify-between text-[10px] sm:text-xs text-slate-400 font-bold px-1 mt-2">
+                    <span>3h (Muy poco)</span>
+                    <span>7h (Promedio)</span>
+                    <span>12h (Excesivo)</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Notas Clínicas */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs sm:text-sm font-bold text-slate-700 flex items-center gap-1.5">
+                  <span>📝</span>
+                  <span>Notas y observaciones</span>
+                </label>
+                <textarea
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  placeholder="Describe cómo te sientes, el clima, o cualquier detalle que sientas relevante..."
+                  rows={3}
+                  className="px-3 sm:px-4 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all duration-200 resize-none placeholder:text-slate-400"
+                />
+              </div>
+
+            </div>
+          )}
+
+        </form>
+
+        {/* Acciones del Footer */}
+        <div className="p-5 sm:p-6 border-t border-slate-100/80 bg-slate-50/50 flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 rounded-xl transition-all duration-200"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs sm:text-sm font-bold rounded-xl shadow-lg shadow-indigo-600/10 hover:shadow-xl hover:shadow-indigo-600/20 active:scale-95 transition-all duration-200 flex items-center gap-2"
+          >
+            <Save className="w-4 h-4" />
+            <span>Guardar Registro</span>
+          </button>
         </div>
+
       </div>
     </div>
   );
-};
-
-export default SimpleHeadacheForm;
+}
